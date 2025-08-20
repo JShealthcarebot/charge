@@ -198,6 +198,22 @@
             <div style="flex:1 1 280px"><canvas id="line"></canvas></div>
           </div>
         </details>
+
+        <details id="recycleBin">
+          <summary>回收桶 / 還原</summary>
+          <div class="tableWrap" style="margin-top:10px">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:180px">時間</th>
+                  <th>內容</th>
+                  <th style="width:240px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="backupTbody"></tbody>
+            </table>
+          </div>
+        </details>
       </div>
 
       <!-- 右：清單 -->
@@ -238,6 +254,18 @@
   const readStore = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
   const writeStore = (arr) => localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
   const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+
+  // 回收桶／備份儲存
+  const BACKUP_KEY = 'ledgerBackups@simple';
+  const readBackups = () => JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+  const writeBackups = (arr) => localStorage.setItem(BACKUP_KEY, JSON.stringify(arr));
+  const recKey = (r) => [r.date, r.type, r.category, r.account||'', r.amount||0, r.note||''].join('|');
+  function saveBackup(data, label){
+    const arr = readBackups();
+    arr.push({ id: uid(), ts: new Date().toISOString(), label: label||'', data });
+    writeBackups(arr);
+    refreshBackups();
+  }
 
   const SLOGANS = [
     '讓每一塊錢都有去處。',
@@ -435,8 +463,8 @@
     const store = readStore();
     const rec = store.find(r=> r.id===id);
     if(!rec) return;
-    // 刪除前自動備份單筆
-    downloadJSON(`backup_${rec.date}_${rec.category}.json`, rec);
+    // 加入回收桶（不觸發下載）
+    saveBackup({ type:'single', records:[rec] }, `單筆_${rec.date}_${rec.category}`);
     if(!confirm('確定刪除這筆紀錄？')) return;
     writeStore(store.filter(r=> r.id!==id));
     refresh();
@@ -520,7 +548,8 @@
     const store = readStore();
     const toDel = store.filter(r=> inRange(r.date, s, e));
     if(toDel.length===0){ alert('此區間沒有資料'); return; }
-    downloadJSON(`backup_range_${s||'NA'}_${e||'NA'}.json`, toDel);
+    // 存入回收桶（不觸發下載）
+    saveBackup({ type:'range', start:s||null, end:e||null, records: toDel }, `區間_${s||'NA'}_${e||'NA'}`);
     if(!confirm(`確認刪除 ${toDel.length} 筆？`)) return;
     const remain = store.filter(r=> !inRange(r.date, s, e));
     writeStore(remain);
@@ -529,7 +558,8 @@
   function clearAll(){
     const store = readStore();
     if(store.length===0){ alert('目前沒有資料'); return; }
-    downloadJSON('backup_all.json', store);
+    // 全部放入回收桶（不觸發下載）
+    saveBackup({ type:'all', records: store }, '全部_清空');
     if(!confirm(`確認清空全部 ${store.length} 筆？`)) return;
     writeStore([]); refresh();
   }
@@ -566,6 +596,65 @@
 
   // 備份 JSON（全部）
   function backupAll(){ downloadJSON('backup_all.json', readStore()); }
+  function refreshBackups(){
+    const tbody = document.getElementById('backupTbody');
+    if(!tbody) return;
+    const arr = readBackups().slice().sort((a,b)=> a.ts<b.ts?1:-1);
+    tbody.innerHTML = '';
+    if(arr.length===0){
+      const tr = document.createElement('tr');
+      const td = document.createElement('td'); td.colSpan = 3; td.innerHTML = '<span class="muted">目前沒有備份</span>';
+      tr.appendChild(td); tbody.appendChild(tr); return;
+    }
+    for(const b of arr){
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = new Date(b.ts).toLocaleString(); tr.appendChild(td1);
+      const count = (b.data && b.data.records) ? b.data.records.length : 0;
+      const td2 = document.createElement('td'); td2.textContent = `${b.label || b.data.type || '備份'}（${count} 筆）`; tr.appendChild(td2);
+      const td3 = document.createElement('td'); td3.style.width='240px';
+      const mkBtn=(txt, cls, fn)=>{ const btn=document.createElement('button'); btn.className=cls; btn.style.marginRight='6px'; btn.textContent=txt; btn.addEventListener('click', ()=> fn(b.id)); return btn; };
+      td3.appendChild(mkBtn('還原','btn', restoreBackup));
+      td3.appendChild(mkBtn('匯出','btn-secondary', exportBackup));
+      td3.appendChild(mkBtn('刪除備份','btn-danger', deleteBackup));
+      tr.appendChild(td3);
+      tbody.appendChild(tr);
+    }
+  }
+
+  function restoreBackup(id){
+    const arr = readBackups();
+    const b = arr.find(x=> x.id===id); if(!b) return;
+    const recs = (b.data && b.data.records) ? b.data.records : [];
+    const store = readStore();
+    const have = new Set(store.map(recKey));
+    let added = 0;
+    for(const r of recs){
+      const k = recKey(r);
+      if(!have.has(k)){
+        have.add(k);
+        const rec = { ...r };
+        if(!rec.id) rec.id = uid();
+        if(!rec.createdAt) rec.createdAt = new Date().toISOString();
+        store.push(rec); added++;
+      }
+    }
+    writeStore(store);
+    alert(`已還原 ${added} 筆`);
+    refresh();
+  }
+
+  function exportBackup(id){
+    const arr = readBackups();
+    const b = arr.find(x=> x.id===id); if(!b) return;
+    const name = b.label || b.data.type || 'data';
+    downloadJSON(`backup_${name}.json`, b.data);
+  }
+
+  function deleteBackup(id){
+    const arr = readBackups().filter(x=> x.id!==id);
+    writeBackups(arr);
+    refreshBackups();
+  }
 
   // 事件綁定
   els.btnFilter.addEventListener('click', refresh);
@@ -586,6 +675,7 @@
 
   // 初次渲染
   refresh();
+  refreshBackups();
 })();
 </script>
 </body>
