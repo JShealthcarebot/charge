@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>記帳網頁板 · 簡潔版</title>
+  <!-- 圖表 & Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --bg: #f4f9f7;           /* 柔和淡綠底 */
+      --card: #ffffff;         /* 卡片白 */
+      --brand: #34b3a0;        /* 主色(自然綠) */
+      --brand-2: #7cc7be;      /* 次色(淺綠) */
+      --accent: #3da9f5;       /* 強調(天空藍) */
+      --text: #1f2937;         /* 主要文字 */
+      --muted: #6b7280;        /* 次要文字 */
+      --danger: #ef4444;       /* 刪除紅 */
+      --ok: #10b981;           /* 成功綠 */
+      --radius: 18px;          /* 微圓角 */
+      --shadow: 0 10px 24px rgba(0,0,0,.08);
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans TC', 'PingFang TC', Arial, sans-serif;
+      background: linear-gradient(180deg, var(--bg), #eaf6f3);
+      color: var(--text);
+    }
+    .wrap{max-width: 980px; margin: 28px auto; padding: 0 16px;}
+    .titleRow{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    .logo{width:42px;height:42px; border-radius:50%; background:linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow:var(--shadow)}
+    h1{font-size:22px; margin:0; letter-spacing:.5px}
+    .tagline{color:var(--muted); font-size:13px}
+
+    .grid{display:grid; grid-template-columns: 1fr; gap:14px}
+    @media(min-width:880px){ .grid{grid-template-columns: 1.1fr .9fr} }
+
+    .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px}
+    .card h2{margin:0 0 10px; font-size:18px}
+
+    .row{display:flex; flex-wrap:wrap; gap:10px}
+    .row > *{flex:1 1 160px}
+    label{font-size:12px; color:var(--muted); display:block; margin:2px 4px}
+    input, select, textarea, button{
+      width:100%; box-sizing:border-box; border:1px solid #e6ecea; background:#fbfefc;
+      padding:10px 12px; border-radius:12px; outline:none; font-size:14px;
+    }
+    input:focus, select:focus, textarea:focus{border-color: var(--brand)}
+
+    .btn{cursor:pointer; border:none; color:#fff; background:linear-gradient(135deg,var(--brand),var(--accent));
+      transition:transform .06s ease, box-shadow .2s ease; box-shadow:0 6px 14px rgba(61,169,245,.25);
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn-secondary{background:linear-gradient(135deg,#93c5fd,#60a5fa)}
+    .btn-danger{background:linear-gradient(135deg,#f87171,#ef4444)}
+    .btn-ghost{background:#fff; color:var(--text); border:1px dashed #d1d5db}
+
+    .stats{display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top:8px}
+    .stat{background:#f6fbfa; border:1px solid #e6f3f0; border-radius:14px; padding:10px 12px}
+    .stat .label{font-size:12px; color:var(--muted)}
+    .stat .val{font-weight:700; margin-top:4px}
+
+    .tools{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+
+    .tableWrap{max-height: 360px; overflow:auto; border:1px solid #edf2f1; border-radius:12px}
+    table{width:100%; border-collapse:collapse; font-size:14px}
+    thead th{position:sticky; top:0; background:#f0faf7; border-bottom:1px solid #e6ecea; padding:10px}
+    tbody td{border-bottom:1px solid #f2f4f3; padding:10px; vertical-align:top}
+    .typeChip{display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; color:#fff}
+    .chip-exp{background:#ef4444}
+    .chip-inc{background:#10b981}
+    .ops{display:flex; gap:6px}
+
+    details{margin-top:10px}
+    summary{cursor:pointer; padding:8px 12px; border-radius:10px; background:#f0faf7; border:1px solid #e6ecea}
+    canvas{max-height: 320px}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titleRow">
+      <div class="logo"></div>
+      <div>
+        <h1>記帳網頁板 · 簡潔版</h1>
+        <div class="tagline" id="tagline">讓每一塊錢都有去處。</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 左：新增 / 篩選 / 總覽 -->
+      <div class="card">
+        <h2>新增交易</h2>
+        <div class="row">
+          <div>
+            <label>日期</label>
+            <input type="date" id="date" />
+          </div>
+          <div>
+            <label>收支</label>
+            <select id="type">
+              <option value="expense">支出</option>
+              <option value="income">收入</option>
+            </select>
+          </div>
+          <div>
+            <label>分類</label>
+            <select id="category"></select>
+          </div>
+          <div>
+            <label>帳戶</label>
+            <select id="account">
+              <option>現金</option>
+              <option>信用卡</option>
+              <option>金融卡</option>
+              <option>電子支付</option>
+              <option>其他</option>
+            </select>
+          </div>
+          <div>
+            <label>金額（TWD）</label>
+            <input type="number" id="amount" step="0.01" placeholder="0" />
+          </div>
+          <div style="flex: 1 1 100%">
+            <label>備註</label>
+            <input type="text" id="note" placeholder="可輸入店家、事項、標籤…" />
+          </div>
+        </div>
+        <div class="tools">
+          <button class="btn" id="btnAdd">＋ 新增</button>
+          <button class="btn-ghost" id="btnQuick">今日零用 $100</button>
+        </div>
+
+        <hr style="border:none; border-top:1px dashed #e5e7eb; margin:14px 0">
+
+        <h2>篩選 / 總覽</h2>
+        <div class="row">
+          <div>
+            <label>開始日期</label>
+            <input type="date" id="fStart" />
+          </div>
+          <div>
+            <label>結束日期</label>
+            <input type="date" id="fEnd" />
+          </div>
+          <div>
+            <label>收支</label>
+            <select id="fType">
+              <option value="all">全部</option>
+              <option value="expense">支出</option>
+              <option value="income">收入</option>
+            </select>
+          </div>
+          <div>
+            <label>分類</label>
+            <select id="fCategory"><!-- 動態填入 --></select>
+          </div>
+          <div style="flex: 1 1 100%">
+            <label>關鍵字（備註/帳戶）</label>
+            <input type="text" id="fKeyword" placeholder="例如：超商、午餐、房租…" />
+          </div>
+        </div>
+        <div class="tools">
+          <button class="btn" id="btnFilter">套用篩選</button>
+          <button class="btn-secondary" id="btnReset">清除篩選</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="label">收入（期間）</div>
+            <div class="val" id="statInc">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">支出（期間）</div>
+            <div class="val" id="statExp">—</div>
+          </div>
+          <div class="stat">
+            <div class="label">淨額（期間）</div>
+            <div class="val" id="statNet">—</div>
+          </div>
+        </div>
+
+        <div class="tools">
+          <button class="btn" id="btnExport">匯出 Excel</button>
+          <input type="file" id="fileImport" accept=".xlsx,.xls" style="display:none" />
+          <button class="btn-secondary" id="btnImport">匯入 Excel</button>
+          <button class="btn-ghost" id="btnBackup">備份 JSON</button>
+          <button class="btn-danger" id="btnDeleteRange">刪除「所選日期區間」</button>
+          <button class="btn-danger" id="btnClearAll">清空全部</button>
+        </div>
+
+        <details id="chartsBox">
+          <summary>展開圖表（分類圓餅 / 走勢折線）</summary>
+          <div class="row" style="margin-top:10px">
+            <div style="flex:1 1 280px"><canvas id="pie"></canvas></div>
+            <div style="flex:1 1 280px"><canvas id="line"></canvas></div>
+          </div>
+        </details>
+      </div>
+
+      <!-- 右：清單 -->
+      <div class="card">
+        <h2>交易清單 <span class="muted" id="listCount"></span></h2>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:100px">日期</th>
+                <th style="width:80px">收支</th>
+                <th>分類 / 帳戶</th>
+                <th style="width:120px">金額</th>
+                <th>備註</th>
+                <th style="width:96px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="muted" style="margin-top:8px">小提醒：點「✎」可快速編輯金額與備註，刪除前會自動下載備份。</div>
+      </div>
+    </div>
+
+    <div class="muted" style="text-align:center; margin:16px 0 6px">Made with 🌱 · 本頁面資料只存於你的瀏覽器（localStorage）。</div>
+  </div>
+
+<script>
+(function(){
+  // ---------- 工具 ----------
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const fmtCurrency = (n) => new Intl.NumberFormat('zh-TW',{style:'currency', currency:'TWD', maximumFractionDigits:0}).format(n||0);
+  const todayStr = () => new Date().toISOString().slice(0,10);
+  const toISODate = (d) => new Date(d+'T00:00:00');
+
+  const STORAGE_KEY = 'ledgerRecords@simple';
+  const readStore = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const writeStore = (arr) => localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+
+  const SLOGANS = [
+    '讓每一塊錢都有去處。',
+    '記下支出，也記下你的理想。',
+    '穩穩變有錢，從今天開始。',
+    '花在刀口上，存到心坎裡。',
+  ];
+
+  // ---------- 分類 ----------
+  const EXP_CAT = ['食物','交通','娛樂','購物','住房','水電瓦斯','醫療','教育','稅金','其他'];
+  const INC_CAT = ['薪資','獎金','投資','退款','其他'];
+
+  const els = {
+    date: $('#date'), type: $('#type'), category: $('#category'), account: $('#account'), amount: $('#amount'), note: $('#note'),
+    btnAdd: $('#btnAdd'), btnQuick: $('#btnQuick'),
+    fStart: $('#fStart'), fEnd: $('#fEnd'), fType: $('#fType'), fCategory: $('#fCategory'), fKeyword: $('#fKeyword'),
+    btnFilter: $('#btnFilter'), btnReset: $('#btnReset'),
+    statInc: $('#statInc'), statExp: $('#statExp'), statNet: $('#statNet'),
+    tbody: $('#tbody'), listCount: $('#listCount'),
+    btnExport: $('#btnExport'), btnImport: $('#btnImport'), fileImport: $('#fileImport'), btnBackup: $('#btnBackup'), btnDeleteRange: $('#btnDeleteRange'), btnClearAll: $('#btnClearAll'),
+    pie: $('#pie'), line: $('#line'), chartsBox: $('#chartsBox'),
+    tagline: $('#tagline')
+  };
+
+  // 初始化 UI
+  els.date.value = todayStr();
+  els.fEnd.value = todayStr();
+  els.fStart.value = todayStr().slice(0,8) + '01'; // 本月1號
+  els.tagline.textContent = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
+
+  function fillCategories(forTypeSel, catSel){
+    const type = forTypeSel.value;
+    const list = type === 'income' ? INC_CAT : EXP_CAT;
+    catSel.innerHTML = '';
+    list.concat(['自訂分類…']).forEach((c)=>{
+      const opt = document.createElement('option');
+      opt.textContent = c; opt.value = c;
+      catSel.appendChild(opt);
+    });
+  }
+  function fillFilterCategories(){
+    const all = Array.from(new Set(EXP_CAT.concat(INC_CAT)));
+    els.fCategory.innerHTML = '';
+    ['全部'].concat(all).forEach(c=>{
+      const opt = document.createElement('option');
+      opt.textContent = c; opt.value = c;
+      els.fCategory.appendChild(opt);
+    })
+  }
+  fillCategories(els.type, els.category);
+  fillFilterCategories();
+
+  els.type.addEventListener('change', ()=> fillCategories(els.type, els.category));
+  els.category.addEventListener('change', ()=>{
+    if(els.category.value === '自訂分類…'){
+      const v = prompt('輸入新的分類名稱：');
+      if(v && v.trim()){
+        const t = els.type.value;
+        (t==='income'?INC_CAT:EXP_CAT).push(v.trim());
+        fillCategories(els.type, els.category);
+        els.category.value = v.trim();
+        fillFilterCategories();
+      } else {
+        fillCategories(els.type, els.category);
+      }
+    }
+  });
+
+  // 新增交易
+  function addRecord(rec){
+    const store = readStore();
+    store.push(rec);
+    writeStore(store);
+  }
+
+  function handleAdd(){
+    const date = els.date.value;
+    const type = els.type.value;
+    const category = els.category.value;
+    const account = els.account.value;
+    const amount = parseFloat(els.amount.value);
+    const note = els.note.value.trim();
+
+    if(!date){ alert('請選擇日期'); return; }
+    if(!category){ alert('請選擇分類'); return; }
+    if(!(amount>0)){ alert('金額需大於 0'); return; }
+
+    const rec = { id: uid(), date, type, category, account, amount, note, createdAt: new Date().toISOString() };
+    addRecord(rec);
+
+    // 清空金額與備註，方便連續輸入
+    els.amount.value = '';
+    els.note.value = '';
+
+    refresh();
+  }
+
+  els.btnAdd.addEventListener('click', handleAdd);
+  els.amount.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleAdd(); });
+  els.btnQuick.addEventListener('click', ()=>{
+    els.type.value = 'expense'; fillCategories(els.type, els.category);
+    els.category.value = '其他';
+    els.account.value = '現金';
+    els.amount.value = 100;
+    els.note.value = '零用';
+    handleAdd();
+  });
+
+  // 篩選 & 計算
+  function inRange(d, start, end){
+    const x = toISODate(d).getTime();
+    if(start && x < toISODate(start).getTime()) return false;
+    if(end && x > toISODate(end).getTime()) return false;
+    return true;
+  }
+
+  function getFiltered(){
+    const store = readStore();
+    const t = els.fType.value;               // all / expense / income
+    const c = els.fCategory.value;           // 全部 / …
+    const kw = els.fKeyword.value.trim();
+    const s = els.fStart.value; const e = els.fEnd.value;
+
+    let arr = store.filter(r=> inRange(r.date, s, e));
+    if(t !== 'all') arr = arr.filter(r=> r.type === t);
+    if(c && c !== '全部') arr = arr.filter(r=> r.category === c);
+    if(kw) arr = arr.filter(r=> (r.note||'').includes(kw) || (r.account||'').includes(kw));
+
+    // 依 日期 DESC, 建立時間 DESC
+    arr.sort((a,b)=> (a.date<b.date?1:a.date>b.date?-1: (a.createdAt<b.createdAt?1:-1)) );
+    return arr;
+  }
+
+  function refreshStats(list){
+    const inc = list.filter(r=> r.type==='income').reduce((s,r)=> s+r.amount,0);
+    const exp = list.filter(r=> r.type==='expense').reduce((s,r)=> s+r.amount,0);
+    els.statInc.textContent = fmtCurrency(inc);
+    els.statExp.textContent = fmtCurrency(exp);
+    els.statNet.textContent = fmtCurrency(inc - exp);
+  }
+
+  function renderTable(list){
+    els.tbody.innerHTML = '';
+    els.listCount.textContent = `（${list.length} 筆）`;
+
+    if(list.length===0){
+      const tr = document.createElement('tr');
+      const td = document.createElement('td'); td.colSpan=6; td.innerHTML = '<span class="muted">本期間沒有資料</span>';
+      tr.appendChild(td); els.tbody.appendChild(tr); return;
+    }
+
+    for(const r of list){
+      const tr = document.createElement('tr');
+      const cDate = document.createElement('td'); cDate.textContent = r.date; tr.appendChild(cDate);
+      const cType = document.createElement('td');
+      const chip = document.createElement('span'); chip.className='typeChip '+(r.type==='expense'?'chip-exp':'chip-inc'); chip.textContent = r.type==='expense'?'支出':'收入';
+      cType.appendChild(chip); tr.appendChild(cType);
+      const cCat = document.createElement('td'); cCat.innerHTML = `<div>${r.category}</div><div class="muted" style="font-size:12px">${r.account||''}</div>`; tr.appendChild(cCat);
+      const cAmt = document.createElement('td'); cAmt.style.textAlign='right'; cAmt.textContent = (r.type==='expense'?'-':'') + fmtCurrency(r.amount).replace('NT$',''); tr.appendChild(cAmt);
+      const cNote = document.createElement('td'); cNote.textContent = r.note||''; tr.appendChild(cNote);
+
+      const cOps = document.createElement('td'); cOps.className='ops';
+      const bEdit = document.createElement('button'); bEdit.className='btn'; bEdit.style.padding='6px 10px'; bEdit.textContent='✎';
+      bEdit.addEventListener('click', ()=> editRecord(r.id));
+      const bDel = document.createElement('button'); bDel.className='btn-danger'; bDel.style.padding='6px 10px'; bDel.textContent='刪';
+      bDel.addEventListener('click', ()=> deleteRecord(r.id));
+      cOps.appendChild(bEdit); cOps.appendChild(bDel); tr.appendChild(cOps);
+
+      els.tbody.appendChild(tr);
+    }
+  }
+
+  // 編輯 & 刪除
+  function editRecord(id){
+    const store = readStore();
+    const idx = store.findIndex(r=> r.id===id); if(idx<0) return;
+    const r = store[idx];
+    const newAmt = prompt('輸入新金額：', r.amount);
+    if(newAmt===null) return;
+    const num = parseFloat(newAmt); if(!(num>0)){ alert('金額需大於 0'); return; }
+    const newNote = prompt('修改備註（可留空）：', r.note||'');
+    store[idx].amount = num; store[idx].note = (newNote||'').trim();
+    writeStore(store);
+    refresh();
+  }
+
+  function downloadJSON(filename, obj){
+    const blob = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=filename; a.click();
+    setTimeout(()=> URL.revokeObjectURL(url), 2000);
+  }
+
+  function deleteRecord(id){
+    const store = readStore();
+    const rec = store.find(r=> r.id===id);
+    if(!rec) return;
+    // 刪除前自動備份單筆
+    downloadJSON(`backup_${rec.date}_${rec.category}.json`, rec);
+    if(!confirm('確定刪除這筆紀錄？')) return;
+    writeStore(store.filter(r=> r.id!==id));
+    refresh();
+  }
+
+  // 匯出 Excel
+  function exportExcel(){
+    const all = getFiltered(); // 匯出目前篩選結果
+    if(all.length===0){ alert('目前篩選無資料可匯出'); return; }
+
+    const txRows = [['Date','Type','Category','Account','Amount','Note','ID']]
+      .concat(all.map(r=>[r.date, r.type, r.category, r.account||'', (r.type==='expense'?-r.amount:r.amount), r.note||'', r.id]));
+
+    // 月結
+    const monthAgg = {};
+    for(const r of all){
+      const m = r.date.slice(0,7);
+      if(!monthAgg[m]) monthAgg[m] = {income:0, expense:0};
+      if(r.type==='income') monthAgg[m].income += r.amount; else monthAgg[m].expense += r.amount;
+    }
+    const sumRows = [['Month','Income','Expense','Net']].concat(
+      Object.keys(monthAgg).sort().map(m=>[m, monthAgg[m].income, monthAgg[m].expense, monthAgg[m].income - monthAgg[m].expense])
+    );
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.aoa_to_sheet(txRows);
+    const ws2 = XLSX.utils.aoa_to_sheet(sumRows);
+    XLSX.utils.book_append_sheet(wb, ws1, 'Transactions');
+    XLSX.utils.book_append_sheet(wb, ws2, 'MonthlySummary');
+    const fname = `ledger_${new Date().toISOString().replace(/[:T]/g,'-').slice(0,16)}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  }
+
+  // 匯入 Excel（Transactions 工作表）
+  function importExcel(file){
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const sheet = wb.Sheets['Transactions'] || wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet, {defval:''});
+      if(json.length===0){ alert('檔案沒有資料'); return; }
+      const store = readStore();
+
+      // 以 key 去重（日期+類型+分類+帳戶+金額+備註）
+      const keyOf = (r)=> [r.date,r.type,r.category,r.account,(r.amount||0), (r.note||'')].join('|');
+      const existedKeys = new Set(store.map(keyOf));
+
+      let added = 0;
+      for(const row of json){
+        // 支援欄位名稱：Date/日期, Type/收支, Category/分類, Account/帳戶, Amount/金額, Note/備註
+        const date = (row.Date||row['日期']||'').toString().slice(0,10);
+        const type = (row.Type||row['收支']||'').toString().toLowerCase().includes('inc')? 'income' : ((row.Type||row['收支']||'')==='收入'?'income':'expense');
+        const category = row.Category||row['分類']||'其他';
+        const account = row.Account||row['帳戶']||'';
+        let amount = parseFloat(row.Amount||row['金額']||0);
+        if(isNaN(amount)) amount = 0;
+        // 若 Amount 為負，視為支出
+        if(amount<0){ amount = Math.abs(amount); }
+        const note = row.Note||row['備註']||'';
+
+        if(!date || !(amount>0)) continue;
+        const tmp = {date, type, category, account, amount, note};
+        const k = keyOf(tmp);
+        if(existedKeys.has(k)) continue; // 跳過重複
+        existedKeys.add(k);
+        store.push({ id: uid(), ...tmp, createdAt: new Date().toISOString() });
+        added++;
+      }
+      writeStore(store);
+      alert(`已匯入 ${added} 筆`);
+      refresh();
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // 刪除區間 / 清空
+  function deleteRange(){
+    const s = els.fStart.value, e = els.fEnd.value;
+    if(!s && !e){ alert('請先指定開始/結束日期'); return; }
+    const store = readStore();
+    const toDel = store.filter(r=> inRange(r.date, s, e));
+    if(toDel.length===0){ alert('此區間沒有資料'); return; }
+    downloadJSON(`backup_range_${s||'NA'}_${e||'NA'}.json`, toDel);
+    if(!confirm(`確認刪除 ${toDel.length} 筆？`)) return;
+    const remain = store.filter(r=> !inRange(r.date, s, e));
+    writeStore(remain);
+    refresh();
+  }
+  function clearAll(){
+    const store = readStore();
+    if(store.length===0){ alert('目前沒有資料'); return; }
+    downloadJSON('backup_all.json', store);
+    if(!confirm(`確認清空全部 ${store.length} 筆？`)) return;
+    writeStore([]); refresh();
+  }
+
+  // 圖表
+  let pieChart=null, lineChart=null;
+  function drawCharts(list){
+    // Pie（僅計算支出分類占比）
+    const exp = list.filter(r=> r.type==='expense');
+    const pieMap = {};
+    for(const r of exp){ pieMap[r.category] = (pieMap[r.category]||0) + r.amount; }
+    const labels = Object.keys(pieMap);
+    const values = labels.map(k=> pieMap[k]);
+
+    if(pieChart){ pieChart.destroy(); }
+    pieChart = new Chart(els.pie, {
+      type:'pie', data:{ labels, datasets:[{ data: values }] }, options:{ plugins:{ legend:{ position:'bottom' } } }
+    });
+
+    // Line（日淨額：收入-支出）
+    const dayMap = {};
+    for(const r of list){
+      dayMap[r.date] = dayMap[r.date] || {inc:0, exp:0};
+      if(r.type==='income') dayMap[r.date].inc += r.amount; else dayMap[r.date].exp += r.amount;
+    }
+    const days = Object.keys(dayMap).sort();
+    const net = days.map(d=> dayMap[d].inc - dayMap[d].exp);
+
+    if(lineChart){ lineChart.destroy(); }
+    lineChart = new Chart(els.line, {
+      type:'line', data:{ labels: days, datasets:[{ label:'日淨額', data: net, tension:.25 }] }, options:{ scales:{ y:{ beginAtZero:true } } }
+    });
+  }
+
+  // 備份 JSON（全部）
+  function backupAll(){ downloadJSON('backup_all.json', readStore()); }
+
+  // 事件綁定
+  els.btnFilter.addEventListener('click', refresh);
+  els.btnReset.addEventListener('click', ()=>{ els.fStart.value=''; els.fEnd.value=''; els.fType.value='all'; els.fCategory.value='全部'; els.fKeyword.value=''; refresh(); });
+  els.btnExport.addEventListener('click', exportExcel);
+  els.btnImport.addEventListener('click', ()=> els.fileImport.click());
+  els.fileImport.addEventListener('change', (e)=>{ const f=e.target.files[0]; if(f) importExcel(f); e.target.value=''; });
+  els.btnBackup.addEventListener('click', backupAll);
+  els.btnDeleteRange.addEventListener('click', deleteRange);
+  els.btnClearAll.addEventListener('click', clearAll);
+
+  function refresh(){
+    const list = getFiltered();
+    renderTable(list);
+    refreshStats(list);
+    if(els.chartsBox.open){ drawCharts(list); }
+  }
+
+  // 初次渲染
+  refresh();
+})();
+</script>
+</body>
+</html>
