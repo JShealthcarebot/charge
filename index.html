@@ -332,3 +332,260 @@
           </div>
         </details>
       </div>
+
+      <div class="card">
+        <h2>交易清單 <span class="muted" id="listCount"></span></h2>
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:100px">日期</th>
+                <th style="width:80px">收支</th>
+                <th>分類 / 帳戶</th>
+                <th style="width:120px">金額</th>
+                <th>備註</th>
+                <th style="width:106px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="muted" style="margin-top:8px">提示：刪除/清空/區間刪除會先丟進「回收桶」，可隨時還原或匯出。手機可左右滑動每列叫出操作。</div>
+      </div>
+    </div>
+    <div class="muted" style="text-align:center; margin:16px 0 6px">Made with 🌱 · 資料存於你的瀏覽器（localStorage）。若要雲端同步，可再接 Firebase。</div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="inner">
+      <button class="circle mini ghost close" id="btnClosePanel" title="關閉">✕</button>
+      <h3>色彩模式</h3>
+      <div class="row segs" id="themeSeg">
+        <div class="seg" data-theme="auto">自動</div>
+        <div class="seg" data-theme="light">淺色</div>
+        <div class="seg" data-theme="dark">深色</div>
+      </div>
+      <h3 style="margin-top:12px">卡片風格</h3>
+      <div class="row segs" id="styleSeg">
+        <div class="seg" data-style="flat">扁平</div>
+        <div class="seg" data-style="glass">玻璃</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fab-wrap" id="fabWrap">
+    <div class="fab-menu">
+      <div class="fab-item">
+        <div class="fab-label">匯出 Excel（目前篩選）</div>
+        <button class="circle secondary" id="btnExport" aria-label="匯出">📤</button>
+      </div>
+      <div class="fab-item">
+        <div class="fab-label">匯入 Excel</div>
+        <button class="circle secondary" id="btnImport" aria-label="匯入">📥</button>
+      </div>
+      <div class="fab-item">
+        <div class="fab-label">備份全部（JSON）</div>
+        <button class="circle" id="btnBackup" aria-label="備份">💾</button>
+      </div>
+      <div class="fab-item">
+        <div class="fab-label">刪除「所選日期區間」</div>
+        <button class="circle danger" id="btnDeleteRange" aria-label="刪除區間">🧹</button>
+      </div>
+      <div class="fab-item">
+        <div class="fab-label">清空全部</div>
+        <button class="circle danger" id="btnClearAll" aria-label="清空">🗑️</button>
+      </div>
+    </div>
+    <button class="circle fab-main" id="menuFab" aria-label="功能">☰</button>
+  </div>
+  <input type="file" id="fileImport" accept=".xlsx,.xls" style="display:none" />
+
+<script>
+(function(){
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+  const fmtCurrency = (n) => new Intl.NumberFormat('zh-TW',{style:'currency', currency:'TWD', maximumFractionDigits:0}).format(n||0);
+  const todayStr = () => new Date().toISOString().slice(0,10);
+  const toISODate = (d) => new Date(d+'T00:00:00');
+
+  const STORAGE_KEY = 'ledgerRecords@circle_v3_2';
+  const BACKUP_KEY = 'ledgerBackups@circle_v3_2';
+  const PREF_KEY = 'ledgerPrefs@circle_v3_2';
+
+  const readStore = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const writeStore = (arr) => localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  const readBackups = () => JSON.parse(localStorage.getItem(BACKUP_KEY) || '[]');
+  const writeBackups = (arr) => localStorage.setItem(BACKUP_KEY, JSON.stringify(arr));
+  const readPrefs = () => JSON.parse(localStorage.getItem(PREF_KEY) || '{"theme":"auto","style":"flat"}');
+  const writePrefs = (obj) => localStorage.setItem(PREF_KEY, JSON.stringify(obj));
+  const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+
+  const SLOGANS = [
+    '讓每一塊錢都有去處。',
+    '記下支出，也記下你的理想。',
+    '穩穩變有錢，從今天開始。',
+    '花在刀口上，存到心坎裡。',
+    '小圓鈕，大成效。'
+  ];
+
+  const EXP_CAT = ['食物','交通','娛樂','購物','住房','水電瓦斯','醫療','教育','稅金','其他'];
+  const INC_CAT = ['薪資','獎金','投資','退款','其他'];
+
+  const els = {
+    date: $('#date'), type: $('#type'), category: $('#category'), account: $('#account'), amount: $('#amount'), note: $('#note'),
+    btnAdd: $('#btnAdd'), btnQuick: $('#btnQuick'),
+    fStart: $('#fStart'), fEnd: $('#fEnd'), fType: $('#fType'), fCategory: $('#fCategory'), fKeyword: $('#fKeyword'),
+    btnFilter: $('#btnFilter'), btnReset: $('#btnReset'),
+    statInc: $('#statInc'), statExp: $('#statExp'), statNet: $('#statNet'),
+    tbody: $('#tbody'), listCount: $('#listCount'),
+    btnExport: $('#btnExport'), btnImport: $('#btnImport'), fileImport: $('#fileImport'), btnBackup: $('#btnBackup'), btnDeleteRange: $('#btnDeleteRange'), btnClearAll: $('#btnClearAll'),
+    pie: $('#pie'), line: $('#line'), chartsBox: $('#chartsBox'),
+    tagline: $('#tagline'),
+    fabWrap: $('#fabWrap'), menuFab: $('#menuFab'),
+    segWrap: $('#segWrap'),
+    btnSettings: $('#btnSettings'), panel: $('#panel'), btnClosePanel: $('#btnClosePanel'),
+    themeSeg: $('#themeSeg'), styleSeg: $('#styleSeg')
+  };
+
+  // ------- 主題/風格 -------
+  let prefs = readPrefs();
+  const mediaDark = window.matchMedia('(prefers-color-scheme: dark)');
+  mediaDark.addEventListener?.('change', ()=> applyTheme());
+  function applyTheme(){
+    const mode = prefs.theme || 'auto';
+    const isDark = mode === 'dark' || (mode === 'auto' && mediaDark.matches);
+    document.body.classList.toggle('dark', isDark);
+    document.body.classList.toggle('glass', (prefs.style === 'glass'));
+    $$('#themeSeg .seg').forEach(s=> s.classList.toggle('active', s.dataset.theme === mode));
+    $$('#styleSeg .seg').forEach(s=> s.classList.toggle('active', s.dataset.style === prefs.style));
+    if (window.Chart){
+      Chart.defaults.color = getComputedStyle(document.body).getPropertyValue('--text').trim();
+      Chart.defaults.borderColor = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim();
+    }
+    drawCharts(getFiltered());
+  }
+  els.btnSettings.addEventListener('click', ()=> els.panel.classList.add('open'));
+  els.btnClosePanel.addEventListener('click', ()=> els.panel.classList.remove('open'));
+  els.themeSeg.addEventListener('click', (e)=>{ const seg = e.target.closest('.seg'); if(!seg) return; prefs.theme = seg.dataset.theme; writePrefs(prefs); applyTheme(); });
+  els.styleSeg.addEventListener('click', (e)=>{ const seg = e.target.closest('.seg'); if(!seg) return; prefs.style = seg.dataset.style; writePrefs(prefs); applyTheme(); });
+
+  // 初始化 UI
+  els.date.value = todayStr();
+  els.fEnd.value = todayStr();
+  els.fStart.value = todayStr().slice(0,8) + '01';
+  els.tagline.textContent = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
+  els.chartsBox.open = true;
+  applyTheme();
+
+  function fillCategories(forTypeSel, catSel){
+    const type = forTypeSel.value;
+    const list = type === 'income' ? INC_CAT : EXP_CAT;
+    const custom = '自訂分類…';
+    catSel.innerHTML = '';
+    list.forEach((c)=>{ const opt = document.createElement('option'); opt.textContent = c; opt.value = c; catSel.appendChild(opt); });
+    const optX = document.createElement('option'); optX.textContent = custom; optX.value = custom; catSel.appendChild(optX);
+    if (!catSel.value || !list.includes(catSel.value)) catSel.value = list.includes('其他') ? '其他' : list[0];
+  }
+  function safeInitCategories(){
+    try{ fillCategories(els.type, els.category); }catch(e){}
+    if(!els.category.options || els.category.options.length===0){
+      ['食物','交通','娛樂','購物','住房','水電瓦斯','醫療','教育','稅金','其他','自訂分類…'].forEach(c=>{
+        const opt=document.createElement('option'); opt.value=c; opt.textContent=c; els.category.appendChild(opt);
+      });
+    }
+  }
+  function fillFilterCategories(){
+    const all = Array.from(new Set(EXP_CAT.concat(INC_CAT)));
+    els.fCategory.innerHTML = '';
+    ['全部'].concat(all).forEach(c=>{
+      const opt = document.createElement('option');
+      opt.textContent = c; opt.value = c;
+      els.fCategory.appendChild(opt);
+    })
+  }
+  safeInitCategories();
+  fillFilterCategories();
+
+  els.type.addEventListener('change', ()=> fillCategories(els.type, els.category));
+  ['focus','mousedown','click'].forEach(evt=>{
+    els.category.addEventListener(evt, ()=>{
+      if(!els.category.options || els.category.options.length<=1){ safeInitCategories(); }
+    });
+  });
+  els.category.addEventListener('change', ()=>{
+    if(els.category.value === '自訂分類…'){
+      const v = prompt('輸入新的分類名稱：');
+      if(v && v.trim()){
+        const t = els.type.value;
+        (t==='income'?INC_CAT:EXP_CAT).push(v.trim());
+        fillCategories(els.type, els.category);
+        els.category.value = v.trim();
+        fillFilterCategories();
+      } else {
+        fillCategories(els.type, els.category);
+      }
+    }
+  });
+
+  function addRecord(rec){ const store = readStore(); store.push(rec); writeStore(store); }
+  function handleAdd(){
+    const date = els.date.value; const type = els.type.value; const category = els.category.value; const account = els.account.value; const amount = parseFloat(els.amount.value); const note = els.note.value.trim();
+    if(!date){ alert('請選擇日期'); return; }
+    if(!category){ alert('請選擇分類'); return; }
+    if(!(amount>0)){ alert('金額需大於 0'); return; }
+    const rec = { id: uid(), date, type, category, account, amount, note, createdAt: new Date().toISOString() };
+    addRecord(rec); els.amount.value = ''; els.note.value = ''; pulse(els.btnAdd); refresh();
+  }
+  els.btnAdd.addEventListener('click', handleAdd);
+  els.amount.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleAdd(); });
+  els.btnQuick.addEventListener('click', ()=>{ els.type.value = 'expense'; safeInitCategories(); els.category.value = '其他'; els.account.value = '現金'; els.amount.value = 100; els.note.value = '零用'; handleAdd(); });
+
+  els.segWrap.addEventListener('click', (e)=>{ const seg = e.target.closest('.seg'); if(!seg) return; $$('#segWrap .seg').forEach(s=> s.classList.remove('active')); seg.classList.add('active'); const r = seg.getAttribute('data-range'); applyQuickRange(r); refresh(); });
+  function applyQuickRange(kind){
+    const d = new Date();
+    if(kind==='today'){ const t = todayStr(); els.fStart.value = t; els.fEnd.value = t; }
+    else if(kind==='month'){ const y = d.getFullYear(); const m = d.getMonth(); const first = new Date(y, m, 1); const last = new Date(y, m+1, 0); els.fStart.value = first.toISOString().slice(0,10); els.fEnd.value = last.toISOString().slice(0,10); }
+    else if(kind==='year'){ const y = d.getFullYear(); els.fStart.value = `${y}-01-01`; els.fEnd.value = `${y}-12-31`; }
+    else if(kind==='all'){ els.fStart.value = ''; els.fEnd.value = ''; }
+  }
+
+  function inRange(d, start, end){ const x = toISODate(d).getTime(); if(start && x < toISODate(start).getTime()) return false; if(end && x > toISODate(end).getTime()) return false; return true; }
+  function getFiltered(){
+    const store = readStore(); const t = els.fType.value; const c = els.fCategory.value; const kw = els.fKeyword.value.trim(); const s = els.fStart.value; const e = els.fEnd.value;
+    let arr = store.filter(r=> inRange(r.date, s, e)); if(t !== 'all') arr = arr.filter(r=> r.type === t); if(c && c !== '全部') arr = arr.filter(r=> r.category === c); if(kw) arr = arr.filter(r=> (r.note||'').includes(kw) || (r.account||'').includes(kw)); arr.sort((a,b)=> (a.date<b.date?1:a.date>b.date?-1: (a.createdAt<b.createdAt?1:-1)) ); return arr;
+  }
+  function refreshStats(list){ const inc = list.filter(r=> r.type==='income').reduce((s,r)=> s+r.amount,0); const exp = list.filter(r=> r.type==='expense').reduce((s,r)=> s+r.amount,0); els.statInc.textContent = fmtCurrency(inc); els.statExp.textContent = fmtCurrency(exp); els.statNet.textContent = fmtCurrency(inc - exp); }
+  function renderTable(list){
+    els.tbody.innerHTML = ''; els.listCount.textContent = `（${list.length} 筆）`;
+    if(list.length===0){ const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan=6; td.innerHTML = '<span class="muted">本期間沒有資料</span>'; tr.appendChild(td); els.tbody.appendChild(tr); return; }
+    for(const r of list){
+      const tr = document.createElement('tr');
+      const cDate = document.createElement('td'); cDate.textContent = r.date; tr.appendChild(cDate);
+      const cType = document.createElement('td'); const chip = document.createElement('span'); chip.className='typeChip '+(r.type==='expense'?'chip-exp':'chip-inc'); chip.textContent = r.type==='expense'?'支出':'收入'; cType.appendChild(chip); tr.appendChild(cType);
+      const cCat = document.createElement('td'); cCat.innerHTML = `<div>${r.category}</div><div class="muted" style="font-size:12px">${r.account||''}</div>`; tr.appendChild(cCat);
+      const cAmt = document.createElement('td'); cAmt.style.textAlign='right'; cAmt.textContent = (r.type==='expense'?'-':'') + fmtCurrency(r.amount).replace('NT$',''); tr.appendChild(cAmt);
+      const cNote = document.createElement('td'); cNote.textContent = r.note||''; tr.appendChild(cNote);
+      const cOps = document.createElement('td'); cOps.className='ops';
+      const bEdit = document.createElement('button'); bEdit.className='circle mini'; bEdit.title='編輯'; bEdit.textContent='✎'; bEdit.addEventListener('click', ()=> editRecord(r.id));
+      const bDel = document.createElement('button'); bDel.className='circle mini danger'; bDel.title='刪除'; bDel.textContent='🗑️'; bDel.addEventListener('click', ()=> deleteRecord(r.id));
+      cOps.appendChild(bEdit); cOps.appendChild(bDel); tr.appendChild(cOps);
+      const act = document.createElement('div'); act.className='swipeActs';
+      const sEdit = document.createElement('button'); sEdit.className='circle mini'; sEdit.textContent='✎'; sEdit.addEventListener('click', (ev)=>{ ev.stopPropagation(); editRecord(r.id); closeSwipe(tr); });
+      const sDel  = document.createElement('button'); sDel.className='circle mini danger'; sDel.textContent='🗑️'; sDel.addEventListener('click', (ev)=>{ ev.stopPropagation(); deleteRecord(r.id); });
+      act.appendChild(sEdit); act.appendChild(sDel); tr.appendChild(act);
+      addSwipe(tr);
+      els.tbody.appendChild(tr);
+    }
+  }
+
+  function recKey(r){ return [r.date, r.type, r.category, r.account||'', r.amount||0, r.note||''].join('|'); }
+  function saveBackup(data, label){ const arr = readBackups(); arr.push({ id: uid(), ts: new Date().toISOString(), label: label||'', data }); writeBackups(arr); refreshBackups(); }
+  function editRecord(id){ const store = readStore(); const idx = store.findIndex(r=> r.id===id); if(idx<0) return; const r = store[idx]; const newAmt = prompt('輸入新金額：', r.amount); if(newAmt===null) return; const num = parseFloat(newAmt); if(!(num>0)){ alert('金額需大於 0'); return; } const newNote = prompt('修改備註（可留空）：', r.note||''); store[idx].amount = num; store[idx].note = (newNote||'').trim(); writeStore(store); refresh(); }
+  function deleteRecord(id){ const store = readStore(); const rec = store.find(r=> r.id===id); if(!rec) return; saveBackup({ type:'single', records:[rec] }, `單筆_${rec.date}_${rec.category}`); if(!confirm('確定刪除這筆紀錄？')) return; writeStore(store.filter(r=> r.id!==id)); refresh(); }
+  function refreshBackups(){ const tbody = document.getElementById('backupTbody'); if(!tbody) return; const arr = readBackups().slice().sort((a,b)=> a.ts<b.ts?1:-1); tbody.innerHTML = ''; if(arr.length===0){ const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3; td.innerHTML = '<span class="muted">目前沒有備份</span>'; tr.appendChild(td); tbody.appendChild(tr); return; } for(const b of arr){ const tr = document.createElement('tr'); const td1 = document.createElement('td'); td1.textContent = new Date(b.ts).toLocaleString(); tr.appendChild(td1); const count = (b.data && b.data.records) ? b.data.records.length : 0; const td2 = document.createElement('td'); td2.textContent = `${b.label || b.data.type || '備份'}（${count} 筆）`; tr.appendChild(td2); const td3 = document.createElement('td'); td3.style.width='240px'; const mkBtn=(txt, cls, fn)=>{ const btn=document.createElement('button'); btn.className='circle mini '+cls; btn.style.marginRight='6px'; btn.textContent=txt; btn.addEventListener('click', ()=> fn(b.id)); return btn; }; td3.appendChild(mkBtn('還原','ok', restoreBackup)); td3.appendChild(mkBtn('匯出','secondary', exportBackup)); td3.appendChild(mkBtn('刪除','danger', deleteBackup)); tr.appendChild(td3); tbody.appendChild(tr); } }
+  function restoreBackup(id){ const arr = readBackups(); const b = arr.find(x=> x.id===id); if(!b) return; const recs = (b.data && b.data.records) ? b.data.records : []; const store = readStore(); const have = new Set(store.map(recKey)); let added = 0; for(const r of recs){ const k = recKey(r); if(!have.has(k)){ have.add(k); const rec = { ...r }; if(!rec.id) rec.id = uid(); if(!rec.createdAt) rec.createdAt = new Date().toISOString(); store.push(rec); added++; } } writeStore(store); alert(`已還原 ${added} 筆`); refresh(); }
+  function exportBackup(id){ const arr = readBackups(); const b = arr.find(x=> x.id===id); if(!b) return; const name = b.label || b.data.type || 'data'; downloadJSON(`backup_${name}.json`, b.data); }
+  function deleteBackup(id){ const arr = readBackups().filter(x=> x.id!==id); writeBackups(arr); refreshBackups(); }
+
+  function exportExcel(){ const all = getFiltered(); if(all.length===0){ alert('目前篩選無資料可匯出'); return; } const txRows = [['Date','Type','Category','Account','Amount','Note','ID']].concat(all.map(r=>[r.date, r.type, r.category, r.account||'', (r.type==='expense'?-r.amount:r.amount), r.note||'', r.id])); const monthAgg = {}; for(const r of all){ const m = r.date.slice(0,7); if(!monthAgg[m]) monthAgg[m] = {income:0, expense:0}; if(r.type==='income') monthAgg[m].income += r.amount; else monthAgg[m].expense += r.amount; } const sumRows = [['Month','Income','Expense','Net']].concat(Object.keys(monthAgg).sort().map(m=>[m, monthAgg[m].income, monthAgg[m].expense, monthAgg[m].income - monthAgg[m].expense])); const wb = XLSX.utils.book_new(); const ws1 = XLSX.utils.aoa_to_sheet(txRows); const ws2 = XLSX.utils.aoa_to_sheet(sumRows); XLSX.utils.book_append_sheet(wb, ws1, 'Transactions'); XLSX.utils.book_append_sheet(wb, ws2, 'MonthlySummary'); const fname = `ledger_${new Date().toISOString().replace(/[:T]/g,'-').slice(0,16)}.xlsx`; XLSX.writeFile(wb, fname); }
+  function importExcel(file){ const reader = new FileReader(); reader.onload = (e)=>{ const data = new Uint8Array(e.target.result); const wb = XLSX.read(data, {type:'array'}); const sheet = wb.Sheets['Transactions'] || wb.Sheets[wb.SheetNames[0]]; const json = XLSX.utils.sheet_to_json(sheet, {defval:''}); if(json.length===0){ alert('檔案沒有資料'); return; } const store = readStore(); const keyOf = (r)=> [r.date,r.type,r.category,r.account,(r.amount||0), (r.note||'')].join('|'); const existedKeys = new Set(store.map(keyOf)); let added = 0; for(const row of json){ const date = (row.Date||row['日期']||'').toString().slice(0,10); const type = (row.Type||row['收支']||'').toString().toLowerCase().includes('inc')? 'income' : ((row.Type||row['收支']||'')==='收入'?'income':'expense'); const category = row.Category||row['分類']||'其他'; const account = row.Account||row['帳戶']||''; let amount = parseFloat(row.Amount||row['金額']||0); if(isNaN(amount)) amount = 0; if(amount<0){ amount = Math.abs(amount); } const note = row.Note||row['備註']||''; if(!date || !(amount>0)) continue; const tmp = {date, type, category, account, amount, note}; const k = keyOf(tmp); if(existedKeys.has(k)) continue; existedKeys.add(k); store.push({ id: uid(), ...tmp, createdAt: new Date().toISOString() }); added++; } writeStore(store); aler
