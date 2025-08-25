@@ -78,7 +78,7 @@
             <label>本月薪資（含加班津貼）</label>
             <input id="salary" type="number" inputmode="decimal" placeholder="例如 42000" />
           </div>
-          <div class="footerNote">已自動包含：勞退自提 <b>6%</b>、福利金 <b>0.5%</b>，勞/健保依 <b>114級距</b> 就近較低級距帶入員工負擔金額（可於下方進階設定覆寫）。</div>
+          <div class="footerNote">已自動包含：勞退自提 <b>6%</b>、福利金 <b>0.5%</b>，勞/健保依 <b>114級距</b> 以<b>向上取整</b>帶入員工負擔金額（可於下方進階設定覆寫）。</div>
           <div class="hr" style="height:8px"></div>
           <div class="totals">
             <div class="pill">扣除合計 <span id="deductTotal">0</span></div>
@@ -108,45 +108,25 @@
       </div>
     </section>
 
-    <!-- 本月支出記錄（只需填資料即可） -->
+    <!-- 支出 -->
     <section class="card">
       <div class="row">
         <div>
-          <div class="field">
-            <label>支出月份</label>
-            <input id="expMonth" type="month" />
+          <div class="field"><label>支出月份</label><input id="expMonth" type="month" /></div>
+          <div class="row" style="grid-template-columns:1fr 1fr">
+            <div class="field"><label>日期</label><input id="expDate" type="date" /></div>
+            <div class="field"><label>金額（元）</label><input id="expAmt" type="number" inputmode="decimal" placeholder="例如 120" /></div>
           </div>
           <div class="row" style="grid-template-columns:1fr 1fr">
-            <div class="field">
-              <label>日期</label>
-              <input id="expDate" type="date" />
-            </div>
-            <div class="field">
-              <label>金額（元）</label>
-              <input id="expAmt" type="number" inputmode="decimal" placeholder="例如 120" />
-            </div>
-          </div>
-          <div class="row" style="grid-template-columns:1fr 1fr">
-            <div class="field">
-              <label>分類</label>
+            <div class="field"><label>分類</label>
               <select id="expCat">
-                <option value="餐飲">餐飲</option>
-                <option value="交通">交通</option>
-                <option value="房租/房貸">房租/房貸</option>
-                <option value="水電瓦斯">水電瓦斯</option>
-                <option value="手機網路">手機網路</option>
-                <option value="醫療/保險">醫療/保險</option>
-                <option value="購物/娛樂">購物/娛樂</option>
-                <option value="稅費/手續費">稅費/手續費</option>
-                <option value="其他">其他</option>
+                <option value="餐飲">餐飲</option><option value="交通">交通</option><option value="房租/房貸">房租/房貸</option>
+                <option value="水電瓦斯">水電瓦斯</option><option value="手機網路">手機網路</option><option value="醫療/保險">醫療/保險</option>
+                <option value="購物/娛樂">購物/娛樂</option><option value="稅費/手續費">稅費/手續費</option><option value="其他">其他</option>
               </select>
             </div>
-            <div class="field">
-              <label>備註</label>
-              <input id="expMemo" type="text" placeholder="可留空" />
-            </div>
+            <div class="field"><label>備註</label><input id="expMemo" type="text" placeholder="可留空" /></div>
           </div>
-
           <div class="btns">
             <button id="btnAddExp" class="round-btn">➕ 新增支出</button>
             <button id="btnClrExpMonth" class="round-btn danger">🗑️ 刪除本月全部支出</button>
@@ -166,7 +146,6 @@
           </div>
         </div>
       </div>
-
       <div class="hr"></div>
       <div class="flex" style="justify-content:space-between;align-items:center">
         <h3 style="margin:0">本月支出清單</h3>
@@ -175,25 +154,21 @@
       <div id="listExp" class="list"></div>
     </section>
 
-    <!-- 進階設定：需要時再展開（保留手動/級距×%） -->
+    <!-- 進階設定：保留但預設不用動 -->
     <section class="card">
       <details id="advDetails">
         <summary style="cursor:pointer;font-weight:700">進階設定（可手動覆寫金額／比率）</summary>
         <div class="row" style="margin-top:12px">
           <div>
+            <div class="field"><label>月份</label><input id="month" type="month" /></div>
             <div class="field">
-              <label>月份</label>
-              <input id="month" type="month" />
-            </div>
-            <div class="field">
-              <label class="flex"><span>依 114(2025) 級距自動帶入（員工負擔：勞保＋健保）</span> <span class="chip">以薪資就近「較高級距（向上取整）」</span></label>
+              <label class="flex"><span>依 114(2025) 級距自動帶入（員工負擔：勞保＋健保）</span> <span class="chip">向上取整</span></label>
               <div class="flex">
                 <label style="display:inline-flex;align-items:center;gap:8px"><input id="chkAutoGrade" type="checkbox" checked> 開啟</label>
                 <select id="gradeSelect" style="width:180px"></select>
                 <span id="gradeInfo" class="chip">—</span>
               </div>
             </div>
-
             <div class="field">
               <label class="flex"><span>勞退自提（預設 6%）</span> <span class="chip">依照 <b>薪資 × %</b> 試算</span></label>
               <div class="flex">
@@ -202,7 +177,6 @@
                 <span id="pensionAmtView" class="chip">金額：0</span>
               </div>
             </div>
-
             <div class="field">
               <label class="flex"><span>勞保（級距或金額）</span> <span class="chip">可擇一：<b>金額直填</b> 或 <b>級距 × 員工負擔率%</b></span></label>
               <div class="flex">
@@ -213,7 +187,6 @@
                 <span id="lbAmtView" class="chip">金額：0</span>
               </div>
             </div>
-
             <div class="field">
               <label class="flex"><span>健保（級距或金額）</span> <span class="chip">可擇一：<b>金額直填</b> 或 <b>級距 × 被保險人自付率%</b></span></label>
               <div class="flex">
@@ -224,33 +197,14 @@
                 <span id="nhAmtView" class="chip">金額：0</span>
               </div>
             </div>
-
             <datalist id="insuredList">
-              <option value="28590"></option>
-              <option value="28800"></option>
-              <option value="30300"></option>
-              <option value="31800"></option>
-              <option value="33300"></option>
-              <option value="34800"></option>
-              <option value="36300"></option>
-              <option value="38200"></option>
-              <option value="40100"></option>
-              <option value="42000"></option>
-              <option value="43900"></option>
-              <option value="45800"></option>
-              <option value="48200"></option>
-              <option value="50600"></option>
-              <option value="53000"></option>
-              <option value="55400"></option>
-              <option value="57800"></option>
-              <option value="60800"></option>
-              <option value="63800"></option>
-              <option value="66800"></option>
-              <option value="69800"></option>
-              <option value="72800"></option>
-              <option value="76500"></option>
+              <option value="28590"></option><option value="28800"></option><option value="30300"></option><option value="31800"></option>
+              <option value="33300"></option><option value="34800"></option><option value="36300"></option><option value="38200"></option>
+              <option value="40100"></option><option value="42000"></option><option value="43900"></option><option value="45800"></option>
+              <option value="48200"></option><option value="50600"></option><option value="53000"></option><option value="55400"></option>
+              <option value="57800"></option><option value="60800"></option><option value="63800"></option><option value="66800"></option>
+              <option value="69800"></option><option value="72800"></option><option value="76500"></option>
             </datalist>
-
             <div class="field">
               <label class="flex"><span>福利金（預設 0.5%）</span> <span class="chip">依照 <b>薪資 × %</b> 試算（公司規定）</span></label>
               <div class="flex">
@@ -260,7 +214,6 @@
               </div>
             </div>
           </div>
-
           <div>
             <div class="field">
               <label>反推薪資（已知「扣款金額」與「%」）</label>
@@ -275,98 +228,78 @@
         </div>
       </details>
     </section>
-
-    <section class="card">
-      <div class="flex" style="justify-content:space-between;align-items:center">
-        <h3 style="margin:0">我的每月紀錄</h3>
-        <span class="chip">左右滑動可刪除或編輯</span>
-      </div>
-      <div id="list" class="list"></div>
-    </section>
   </main>
 
   <script>
     // ===== Dark mode =====
-    const darkBtn = document.getElementById('toggleDark');
-    const LS_DARK = 'paybook:dark';
+    var darkBtn = document.getElementById('toggleDark');
+    var LS_DARK = 'paybook:dark';
     function applyDark(d){ document.documentElement.classList.toggle('dark', d); }
     applyDark(localStorage.getItem(LS_DARK)==='1');
-    darkBtn.onclick = ()=>{ const d = !document.documentElement.classList.contains('dark'); localStorage.setItem(LS_DARK, d?'1':'0'); applyDark(d); }
+    darkBtn.onclick = function(){ var d = !document.documentElement.classList.contains('dark'); localStorage.setItem(LS_DARK, d?'1':'0'); applyDark(d); }
 
     // ===== DOM refs =====
-    const $ = s=>document.querySelector(s);
-    const month = $('#month');
-    const salary = $('#salary');
+    function $(s){ return document.querySelector(s); }
+    var month = $('#month');
+    var salary = $('#salary');
 
-    const chkAutoGrade = $('#chkAutoGrade');
-    const gradeSelect = $('#gradeSelect');
-    const gradeInfo = $('#gradeInfo');
+    var chkAutoGrade = $('#chkAutoGrade');
+    var gradeSelect = $('#gradeSelect');
+    var gradeInfo = $('#gradeInfo');
 
-    const chkPension = $('#chkPension');
-    const pensionRate = $('#pensionRate');
-    const pensionAmtView = $('#pensionAmtView');
+    var chkPension = $('#chkPension');
+    var pensionRate = $('#pensionRate');
+    var pensionAmtView = $('#pensionAmtView');
 
-    const lbAmount = $('#lbAmount');
-    const lbInsured = $('#lbInsured');
-    const lbRate = $('#lbRate');
-    const lbAmtView = $('#lbAmtView');
+    var lbAmount = $('#lbAmount');
+    var lbInsured = $('#lbInsured');
+    var lbRate = $('#lbRate');
+    var lbAmtView = $('#lbAmtView');
 
-    const nhAmount = $('#nhAmount');
-    const nhInsured = $('#nhInsured');
-    const nhRate = $('#nhRate');
-    const nhAmtView = $('#nhAmtView');
+    var nhAmount = $('#nhAmount');
+    var nhInsured = $('#nhInsured');
+    var nhRate = $('#nhRate');
+    var nhAmtView = $('#nhAmtView');
 
-    const chkWelfare = $('#chkWelfare');
-    const welfareRate = $('#welfareRate');
-    const welfareAmtView = $('#welfareAmtView');
+    var chkWelfare = $('#chkWelfare');
+    var welfareRate = $('#welfareRate');
+    var welfareAmtView = $('#welfareAmtView');
 
-    const deductTotal = $('#deductTotal');
-    const netPay = $('#netPay');
+    var deductTotal = $('#deductTotal');
+    var netPay = $('#netPay');
 
-    const vLB = $('#vLB');
-    const vNH = $('#vNH');
-    const vP = $('#vP');
-    const vWF = $('#vWF');
-    const vTotal = $('#vTotal');
-    const vGrade = $('#vGrade');
+    var vLB = $('#vLB');
+    var vNH = $('#vNH');
+    var vP = $('#vP');
+    var vWF = $('#vWF');
+    var vTotal = $('#vTotal');
+    var vGrade = $('#vGrade');
 
-    const btnAdd = $('#btnAdd');
-    const btnExport = $('#btnExport');
-    const fileImport = $('#fileImport');
-    const btnClearAll = $('#btnClearAll');
+    var btnAdd = $('#btnAdd');
+    var btnExport = $('#btnExport');
+    var fileImport = $('#fileImport');
+    var btnClearAll = $('#btnClearAll');
 
-    // 支出區域
-    const expMonth = $('#expMonth');
-    const expDate = $('#expDate');
-    const expAmt = $('#expAmt');
-    const expCat = $('#expCat');
-    const expMemo = $('#expMemo');
-    const listExp = $('#listExp');
-    const expSum = $('#expSum');
-    const expRemain = $('#expRemain');
-    const expHint = $('#expHint');
-    const btnAddExp = $('#btnAddExp');
-    const btnClrExpMonth = $('#btnClrExpMonth');
-    const btnExportExp = $('#btnExportExp');
-    const fileImportExp = $('#fileImportExp');
+    var list = $('#list');
 
-    const list = $('#list');
+    var revAmt = $('#revAmt');
+    var revPct = $('#revPct');
+    var btnReverse = $('#btnReverse');
+    var revBase = $('#revBase');
 
-    const revAmt = $('#revAmt');
-    const revPct = $('#revPct');
-    const btnReverse = $('#btnReverse');
-    const revBase = $('#revBase');
-
-    const LS_KEY = 'paybook:records';
-    const LS_EXP = 'paybook:expenses';
+    var LS_KEY = 'paybook:records';
+    var LS_EXP = 'paybook:expenses';
 
     // ===== Utils =====
-    const fmt = n => Number(n||0).toLocaleString('zh-TW', {maximumFractionDigits:0});
-    const toNum = v => v===''||v==null?0:Number(v);
-    const clamp = (n,min=0)=> isFinite(n)? Math.max(n,min):0;
+    function fmt(n){ return Number(n||0).toLocaleString('zh-TW', {maximumFractionDigits:0}); }
+    function toNum(v){ if(v===undefined||v===null||v==='') return 0; var n=Number(v); return isFinite(n)?n:0; }
+    function clamp(n,min){ if(min===void 0) min=0; return isFinite(n)? Math.max(n,min):0; }
+    function gv(el){ return el && typeof el.value!=='undefined' ? el.value : ''; }
+    function gi(el){ return toNum(gv(el)); }
+    function st(el, s){ if(el) el.textContent = s; }
 
     // ===== 114(2025) 級距表（員工負擔：勞保/健保/合計） =====
-    const GRADES = [
+    var GRADES = [
       {g:28590, lb:715,  nh:443,  t:1158},
       {g:28800, lb:720,  nh:447,  t:1167},
       {g:30300, lb:758,  nh:470,  t:1228},
@@ -389,326 +322,126 @@
       {g:66800, lb:1145, nh:1036, t:2181},
       {g:69800, lb:1145, nh:1083, t:2228},
       {g:72800, lb:1145, nh:1129, t:2274},
-      {g:76500, lb:1145, nh:1187, t:2332},
+      {g:76500, lb:1145, nh:1187, t:2332}
     ];
 
-    // 建立下拉級距
     function buildGradeOptions(){
       if(!gradeSelect) return;
       gradeSelect.innerHTML = '';
-      for(const r of GRADES){
-        const opt = document.createElement('option');
+      for(var i=0;i<GRADES.length;i++){
+        var r = GRADES[i];
+        var opt = document.createElement('option');
         opt.value = r.g;
-        opt.textContent = `${r.g.toLocaleString()}（勞保 ${r.lb.toLocaleString()}／健保 ${r.nh.toLocaleString()}／合計 ${r.t.toLocaleString()}）`;
+        opt.textContent = r.g.toLocaleString()+`（勞保 ${r.lb.toLocaleString()}／健保 ${r.nh.toLocaleString()}／合計 ${r.t.toLocaleString()}）`;
         gradeSelect.appendChild(opt);
       }
     }
 
-    // 依薪資選擇級距（就近較低）
+    // 向上取整：選擇第一個 >= 薪資 的級距；超出表格上限則使用最高級距
     function pickGradeBySalary(base){
-      // 向上取整：選擇第一個 >= 薪資 的級距；超出表格上限則使用最高級距
-      for(const r of GRADES){ if(base <= r.g) return r; }
+      for(var i=0;i<GRADES.length;i++){ var r = GRADES[i]; if(base <= r.g) return r; }
       return GRADES[GRADES.length-1];
     }
-      return best;
-    }
 
-    let lastGradeRow = null; let manualGrade = false; // 是否使用者手動選級距
-    function applyAutoGrade(){
-      const enabled = !chkAutoGrade || chkAutoGrade.checked; // 簡易模式預設啟用
-      if(gradeSelect) gradeSelect.disabled = !enabled;
-      if(!enabled){ if(gradeInfo) gradeInfo.textContent = '未啟用'; lastGradeRow=null; return; }
-      const base = clamp(toNum(salary.value));
-      let row = null;
-      if(gradeSelect && manualGrade && gradeSelect.value){
-        row = GRADES.find(r=>String(r.g)===String(gradeSelect.value));
-      } else {
-        row = pickGradeBySalary(base);
-        if(gradeSelect) gradeSelect.value = String(row.g);
-      }
-      // 將員工端金額帶入「金額直填」
-      if(lbAmount) lbAmount.value = row.lb;
-      if(lbInsured) lbInsured.value = '';
-      if(lbRate) lbRate.value = '';
-      if(nhAmount) nhAmount.value = row.nh;
-      if(nhInsured) nhInsured.value = '';
-      if(nhRate) nhRate.value = '';
-      if(gradeInfo){
-        const over = base > GRADES[GRADES.length-1].g;
-        gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元` + (over? '（超出表上限，已用最高級距）':'');
-      }
-      lastGradeRow = row;
-    }
+    var lastGradeRow = null; var manualGrade = false;
 
     // ===== Chart =====
-    let pie; const ctx = document.getElementById('pie');
-    let pieExp; const ctxExp = document.getElementById('pieExp');
-    function upChart(parts){
-      try{
-        const labels = parts.filter(p=>p.v>0).map(p=>p.k);
-        const data = parts.filter(p=>p.v>0).map(p=>p.v);
-        if(typeof Chart==='undefined' || !ctx){ return; }
-        if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
-        else{ pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); }
-      }catch(e){ /* 忽略圖表錯誤，避免阻斷計算 */ }
-    }]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
-      else{ pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); }
-    }
-    function upExpChart(group){
-      try{
-        if(typeof Chart==='undefined' || !ctxExp){ return; }
-        const labels = Object.keys(group);
-        const data = labels.map(k=>group[k]);
-        if(!pieExp){ pieExp = new Chart(ctxExp,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
-        else{ pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); }
-      }catch(e){ /* 忽略圖表錯誤 */ }
-    }]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
-      else{ pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); }
-    }
+    var pie; var ctx = document.getElementById('pie');
+    var pieExp; var ctxExp = document.getElementById('pieExp');
+    function upChart(parts){ try{ var labels = parts.filter(function(p){return p.v>0}).map(function(p){return p.k}); var data = parts.filter(function(p){return p.v>0}).map(function(p){return p.v}); if(typeof Chart==='undefined' || !ctx){ return; } if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); } else { pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); } }catch(e){} }
+    function upExpChart(group){ try{ if(typeof Chart==='undefined' || !ctxExp){ return; } var labels = Object.keys(group); var data = labels.map(function(k){return group[k]}); if(!pieExp){ pieExp = new Chart(ctxExp,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); } else { pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); } }catch(e){} }
 
     // ===== Live calc =====
     function calc(){
-      // 若無薪資欄位，回傳歸零
-      if(!salary){ return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; }
-      const base = clamp(toNum(salary.value));
+      if(!salary) return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 };
+      var base = clamp(toNum(salary.value));
 
-      // 依薪資選級距（向上取整）；若使用者手動挑選且不低於薪資，則沿用
-      let row = pickGradeBySalary(base);
+      // 選級距（向上取整），若手動且不低於薪資則沿用
+      var row = pickGradeBySalary(base);
       if(gradeSelect && manualGrade){
-        const sel = Number(gradeSelect.value||0);
-        if(sel >= base){ const f = GRADES.find(r=>r.g===sel); if(f) row = f; }
+        var sel = toNum(gradeSelect.value);
+        if(sel >= base){ for(var i=0;i<GRADES.length;i++){ if(GRADES[i].g===sel){ row = GRADES[i]; break; } } }
       } else if(gradeSelect){ gradeSelect.value = String(row.g); }
       lastGradeRow = row;
-      if(gradeInfo){
-        const over = base > GRADES[GRADES.length-1].g;
-        gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元` + (over? '（超出表上限，已用最高級距）':'');
-      }
+      if(gradeInfo){ var over = base > GRADES[GRADES.length-1].g; gradeInfo.textContent = '級距 '+row.g.toLocaleString()+'，員工合計 '+row.t.toLocaleString()+' 元' + (over? '（超出表上限，已用最高級距）':''); }
 
       // 勞退 / 福利
-      const pAmt = Math.round(base * clamp(toNum(pensionRate?.value||6))/100);
-      const wfAmt = Math.round(base * clamp(toNum(welfareRate?.value||0.5))/100);
-      if(pensionAmtView) pensionAmtView.textContent = '金額：' + fmt(pAmt);
-      if(welfareAmtView) welfareAmtView.textContent = '金額：' + fmt(wfAmt);
+      var pr = gi(pensionRate); if(!(pr>0)) pr = 6; var pAmt = Math.round(base * clamp(pr)/100); st(pensionAmtView, '金額：'+fmt(pAmt));
+      var wr = gi(welfareRate); if(!(wr>0)) wr = 0.5; var wfAmt = Math.round(base * clamp(wr)/100); st(welfareAmtView, '金額：'+fmt(wfAmt));
 
-      // 勞保/健保：優先採用手動金額；否則用級距金額；再否則用「級距×%」
-      let lbAmt = clamp(toNum(lbAmount?.value));
-      let nhAmt = clamp(toNum(nhAmount?.value));
-      if(!(lbAmt>0)) lbAmt = row.lb; // 預設用級距
+      // 勞保/健保：優先手動金額，否則用級距；再否則用（級距×%）
+      var lbAmt = gi(lbAmount); var nhAmt = gi(nhAmount);
+      if(!(lbAmt>0)) lbAmt = row.lb;
       if(!(nhAmt>0)) nhAmt = row.nh;
-      // 備用：若真的要用級距×%（ins*rate），維持相容
-      if(!(lbAmt>0)){ const ins = clamp(toNum(lbInsured?.value)); const r = clamp(toNum(lbRate?.value)); if(ins>0 && r>0) lbAmt = Math.round(ins*r/100); }
-      if(!(nhAmt>0)){ const ins = clamp(toNum(nhInsured?.value)); const r = clamp(toNum(nhRate?.value)); if(ins>0 && r>0) nhAmt = Math.round(ins*r/100); }
-      if(lbAmtView) lbAmtView.textContent = '金額：' + fmt(lbAmt);
-      if(nhAmtView) nhAmtView.textContent = '金額：' + fmt(nhAmt);
+      if(!(lbAmt>0)){ var ins1 = gi(lbInsured); var r1 = gi(lbRate); if(ins1>0 && r1>0) lbAmt = Math.round(ins1*r1/100); }
+      if(!(nhAmt>0)){ var ins2 = gi(nhInsured); var r2 = gi(nhRate); if(ins2>0 && r2>0) nhAmt = Math.round(ins2*r2/100); }
+      st(lbAmtView, '金額：'+fmt(lbAmt)); st(nhAmtView, '金額：'+fmt(nhAmt));
 
-      const totalDeduct = pAmt + lbAmt + nhAmt + wfAmt;
-      const net = Math.max(0, base - totalDeduct);
-      deductTotal.textContent = fmt(totalDeduct);
-      netPay.textContent = fmt(net);
+      var totalDeduct = pAmt + lbAmt + nhAmt + wfAmt;
+      var net = Math.max(0, base - totalDeduct);
+      st(deductTotal, fmt(totalDeduct)); st(netPay, fmt(net));
 
-      // 簡易明細
-      if(vLB) vLB.textContent = fmt(lbAmt);
-      if(vNH) vNH.textContent = fmt(nhAmt);
-      if(vP) vP.textContent = fmt(pAmt);
-      if(vWF) vWF.textContent = fmt(wfAmt);
-      if(vTotal) vTotal.textContent = fmt(totalDeduct);
-      if(vGrade) vGrade.textContent = lastGradeRow? lastGradeRow.g.toLocaleString() : '—';
+      st(vLB, fmt(lbAmt)); st(vNH, fmt(nhAmt)); st(vP, fmt(pAmt)); st(vWF, fmt(wfAmt)); st(vTotal, fmt(totalDeduct)); st(vGrade, lastGradeRow? lastGradeRow.g.toLocaleString() : '—');
 
-      upChart([
-        {k:'自提6%', v:pAmt},
-        {k:'勞保', v:lbAmt},
-        {k:'健保', v:nhAmt},
-        {k:'福利金', v:wfAmt},
-      ]);
-      return { base, pAmt, lbAmt, nhAmt, wfAmt, totalDeduct, net };
+      upChart([{k:'自提6%', v:pAmt}, {k:'勞保', v:lbAmt}, {k:'健保', v:nhAmt}, {k:'福利金', v:wfAmt}]);
+      return { base:base, pAmt:pAmt, lbAmt:lbAmt, nhAmt:nhAmt, wfAmt:wfAmt, totalDeduct:totalDeduct, net:net };
     }
+
+    function calcSafe(){ try{ return calc(); } catch(e){ console.error('calc error', e); return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; } }
 
     // 事件
-    function calcSafe(){ try{ return calc(); } catch(e){ console.error('calc error', e); return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; } }
-    ['input','change','keyup'].forEach(evt=>{
+    ;['input','change','keyup'].forEach(function(evt){
       [salary, gradeSelect, pensionRate, lbAmount, lbInsured, lbRate, nhAmount, nhInsured, nhRate, welfareRate]
-        .filter(Boolean)
-        .forEach(el=>el.addEventListener(evt, calcSafe));
+        .filter(function(el){return !!el})
+        .forEach(function(el){ el.addEventListener(evt, calcSafe); });
     });
-    // 薪資變動時，恢復自動級距模式
-    if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
-    // 薪資變動時，恢復自動級距模式
-    if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
-    if(gradeSelect){ gradeSelect.addEventListener('change', ()=>{
-      const base = clamp(toNum(salary.value));
-      const sel = Number(gradeSelect.value||0);
-      if(sel < base){
-        const row = pickGradeBySalary(base);
-        gradeSelect.value = String(row.g);
-        alert(`投保薪資不得低於實際薪資，已改為 ${row.g.toLocaleString()} 級距`);
-      }
-      manualGrade = true;
-      calcSafe();
-    }); }
+    if(salary){ salary.addEventListener('input', function(){ manualGrade = false; }); }
+    if(gradeSelect){ gradeSelect.addEventListener('change', function(){ var base = clamp(toNum(salary.value)); var sel = toNum(gradeSelect.value); if(sel < base){ var r = pickGradeBySalary(base); gradeSelect.value = String(r.g); alert('投保薪資不得低於實際薪資，已改為 '+r.g.toLocaleString()+' 級距'); } manualGrade = true; calcSafe(); }); }
 
-    // 反推
-    if(btnReverse) btnReverse.addEventListener('click',()=>{
-      const amt = clamp(toNum(revAmt.value));
-      const pct = clamp(toNum(revPct.value));
-      if(amt>0 && pct>0){ const base = Math.round( amt / (pct/100) ); revBase.textContent = fmt(base); }
-    });
-
-    // ===== Records =====
+    // ===== Records（薪資月紀錄） =====
     function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return [] } }
     function save(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
+    function render(){ var arr = load().sort(function(a,b){ return (a.month||'').localeCompare(b.month||''); }); var listEl = document.getElementById('list'); if(!listEl) return; listEl.innerHTML = ''; if(arr.length===0){ listEl.innerHTML = '<div class="footerNote">尚無紀錄，填寫薪資後按「新增／更新本月紀錄」。</div>'; return; } for(var i=0;i<arr.length;i++){ var rec = arr[i]; var div = document.createElement('div'); div.className = 'item'; div.innerHTML = '<div class="swipeDel"><button class="btnDel">刪除</button></div>'+
+      '<h4>'+rec.month+'｜實領 '+fmt(rec.net)+' 元</h4>'+
+      '<div class="meta"><span>薪資 '+fmt(rec.base)+'</span><span>勞退自提 '+fmt(rec.pAmt)+'</span><span>勞保 '+fmt(rec.lbAmt)+'</span><span>健保 '+fmt(rec.nhAmt)+'</span><span>福利金 '+fmt(rec.wfAmt)+'</span></div>'+
+      '<div class="sum">扣除合計：'+fmt(rec.totalDeduct)+' 元</div>';
+      (function(div,rec){ var sx=0,dx=0; var del = div.querySelector('.swipeDel'); var btnDel = div.querySelector('.btnDel'); btnDel.addEventListener('click', function(){ if(!confirm('刪除 '+rec.month+' 紀錄？')) return; var all = load().filter(function(x){return x.month!==rec.month}); save(all); render(); }); div.addEventListener('touchstart', function(e){ sx = e.changedTouches[0].clientX; }); div.addEventListener('touchmove', function(e){ dx = e.changedTouches[0].clientX - sx; del.style.opacity = Math.min(1, Math.max(0, (-dx)/80)); }); div.addEventListener('touchend', function(){ del.style.opacity = dx < -80 ? 1 : 0; sx=dx=0; }); div.addEventListener('click', function(e){ if(e.target.classList.contains('btnDel')) return; if(month) month.value = rec.month; salary.value = rec.base; calcSafe(); window.scrollTo({top:0, behavior:'smooth'}); }); })(div,rec); listEl.appendChild(div);} }
 
-    function render(){
-      const arr = load().sort((a,b)=> (a.month||'').localeCompare(b.month||''));
-      list.innerHTML = '';
-      if(arr.length===0){ list.innerHTML = '<div class="footerNote">尚無紀錄，填寫薪資後按「新增／更新本月紀錄」。</div>'; return; }
-      for(const rec of arr){
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <div class="swipeDel"><button class="btnDel">刪除</button></div>
-          <h4>${rec.month}｜實領 ${fmt(rec.net)} 元</h4>
-          <div class="meta">
-            <span>薪資 ${fmt(rec.base)}</span>
-            <span>勞退自提 ${fmt(rec.pAmt)}</span>
-            <span>勞保 ${fmt(rec.lbAmt)}</span>
-            <span>健保 ${fmt(rec.nhAmt)}</span>
-            <span>福利金 ${fmt(rec.wfAmt)}</span>
-          </div>
-          <div class="sum">扣除合計：${fmt(rec.totalDeduct)} 元</div>
-        `;
-        let sx=0, dx=0; const del = div.querySelector('.swipeDel');
-        const btnDel = div.querySelector('.btnDel');
-        btnDel.addEventListener('click', ()=>{ if(!confirm(`刪除 ${rec.month} 紀錄？`)) return; const all = load().filter(x=>x.month!==rec.month); save(all); render(); });
-        div.addEventListener('touchstart', e=>{ sx = e.changedTouches[0].clientX; });
-        div.addEventListener('touchmove', e=>{ dx = e.changedTouches[0].clientX - sx; del.style.opacity = Math.min(1, Math.max(0, (-dx)/80)); });
-        div.addEventListener('touchend', ()=>{ if(dx < -80){ del.style.opacity=1; } else { del.style.opacity=0; } sx=dx=0; });
-        div.addEventListener('click', e=>{
-          if(e.target.classList.contains('btnDel')) return;
-          month && (month.value = rec.month);
-          salary.value = rec.base;
-          calc();
-          window.scrollTo({top:0, behavior:'smooth'});
-        });
-        list.appendChild(div);
-      }
-    }
+    function addOrUpdate(){ var m = (month && month.value) || new Date().toISOString().slice(0,7); var c = calcSafe(); var rec = { month:m, base:c.base, pRate:6, pAmt:c.pAmt, lbAmt:c.lbAmt, nhAmt:c.nhAmt, wfRate:0.5, wfAmt:c.wfAmt, totalDeduct:c.totalDeduct, net:c.net }; var arr = load(); var i = arr.findIndex? arr.findIndex(function(x){return x.month===m}) : (function(){ for(var j=0;j<arr.length;j++){ if(arr[j].month===m) return j; } return -1; })(); if(i>=0) arr[i]=rec; else arr.push(rec); save(arr); render(); }
 
-    function addOrUpdate(){
-      const m = (month && month.value) || new Date().toISOString().slice(0,7);
-      const c = calcSafe();
-      const rec = { month:m, base:c.base, pRate:6, pAmt:c.pAmt, lbAmt:c.lbAmt, nhAmt:c.nhAmt, wfRate:0.5, wfAmt:c.wfAmt, totalDeduct:c.totalDeduct, net:c.net };
-      const arr = load();
-      const i = arr.findIndex(x=>x.month===m);
-      if(i>=0) arr[i]=rec; else arr.push(rec);
-      save(arr); render();
-    }
-
-    btnAdd.addEventListener('click', addOrUpdate);
-
-    btnExport.addEventListener('click', ()=>{
-      const data = JSON.stringify(load(), null, 2);
-      const blob = new Blob([data], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'paybook-records.json'; a.click(); URL.revokeObjectURL(a.href);
-    });
-
-    fileImport.addEventListener('change', e=>{
-      const f = e.target.files?.[0]; if(!f) return; const rd = new FileReader(); rd.onload = () => { try{ const arr = JSON.parse(rd.result); if(Array.isArray(arr)){ save(arr); render(); alert('匯入完成'); } } catch(err){ alert('匯入失敗：檔案格式錯誤'); } }; rd.readAsText(f);
-    });
-
-    btnClearAll.addEventListener('click', ()=>{ if(confirm('確定要清空全部紀錄？此動作無法復原。')){ save([]); render(); } });
+    if(btnAdd) btnAdd.addEventListener('click', addOrUpdate);
+    if(btnExport) btnExport.addEventListener('click', function(){ var data = JSON.stringify(load(), null, 2); var blob = new Blob([data], {type:'application/json'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'paybook-records.json'; a.click(); URL.revokeObjectURL(a.href); });
+    if(fileImport) fileImport.addEventListener('change', function(e){ var f = e.target.files && e.target.files[0]; if(!f) return; var rd = new FileReader(); rd.onload = function(){ try{ var arr = JSON.parse(rd.result); if(arr && arr.constructor===Array){ save(arr); render(); alert('匯入完成'); } }catch(err){ alert('匯入失敗：檔案格式錯誤'); } }; rd.readAsText(f); });
+    if(btnClearAll) btnClearAll.addEventListener('click', function(){ if(confirm('確定要清空全部紀錄？此動作無法復原。')){ save([]); render(); } });
 
     // ===== Expenses (每月支出) =====
+    var expMonth = $('#expMonth'); var expDate = $('#expDate'); var expAmt = $('#expAmt'); var expCat = $('#expCat'); var expMemo = $('#expMemo'); var listExp = $('#listExp'); var expSum = $('#expSum'); var expRemain = $('#expRemain'); var expHint = $('#expHint'); var btnAddExp = $('#btnAddExp'); var btnClrExpMonth = $('#btnClrExpMonth'); var btnExportExp = $('#btnExportExp'); var fileImportExp = $('#fileImportExp');
+
     function loadExp(){ try{ return JSON.parse(localStorage.getItem(LS_EXP)||'[]'); }catch(e){ return [] } }
     function saveExp(arr){ localStorage.setItem(LS_EXP, JSON.stringify(arr)); }
     function monthOf(d){ return (d||new Date().toISOString().slice(0,10)).slice(0,7); }
 
-    function renderExp(){
-      const m = expMonth?.value || new Date().toISOString().slice(0,7);
-      if(expMonth && !expMonth.value) expMonth.value = m;
-      // 清單
-      const arr = loadExp().filter(x=>x.month===m);
-      listExp.innerHTML = '';
-      let total = 0; const group = {};
-      for(const it of arr){
-        total += Number(it.amt)||0; group[it.cat] = (group[it.cat]||0) + (Number(it.amt)||0);
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
-          <div class="swipeDel"><button class="btnDel">刪除</button></div>
-          <h4>${it.date}｜${it.cat} ${fmt(it.amt)} 元</h4>
-          <div class="meta">${it.memo?it.memo:'—'}</div>
-        `;
-        // 刪除
-        const btnDel = div.querySelector('.btnDel');
-        btnDel.addEventListener('click', ()=>{
-          const all = loadExp().filter(x=>x.id!==it.id);
-          saveExp(all); renderExp();
-        });
-        // 點擊載入編輯
-        div.addEventListener('click', e=>{
-          if(e.target.classList.contains('btnDel')) return;
-          expDate.value = it.date; expAmt.value = it.amt; expCat.value = it.cat; expMemo.value = it.memo||'';
-        });
-        // 滑動刪除視覺
-        let sx=0, dx=0; const del = div.querySelector('.swipeDel');
-        div.addEventListener('touchstart', e=>{ sx = e.changedTouches[0].clientX; });
-        div.addEventListener('touchmove', e=>{ dx = e.changedTouches[0].clientX - sx; del.style.opacity = Math.min(1, Math.max(0, (-dx)/80)); });
-        div.addEventListener('touchend', ()=>{ if(dx < -80){ del.style.opacity=1; } else { del.style.opacity=0; } sx=dx=0; });
-        listExp.appendChild(div);
-      }
-      expSum.textContent = fmt(total);
+    function renderExp(){ var m = expMonth && expMonth.value ? expMonth.value : new Date().toISOString().slice(0,7); if(expMonth && !expMonth.value) expMonth.value = m; var arr = loadExp().filter(function(x){return x.month===m}); listExp.innerHTML = ''; var total = 0; var group = {}; for(var i=0;i<arr.length;i++){ var it = arr[i]; total += Number(it.amt)||0; group[it.cat] = (group[it.cat]||0) + (Number(it.amt)||0); var div = document.createElement('div'); div.className = 'item'; div.innerHTML = '<div class="swipeDel"><button class="btnDel">刪除</button></div>'+'<h4>'+it.date+'｜'+it.cat+' '+fmt(it.amt)+' 元</h4>'+'<div class="meta">'+(it.memo||'—')+'</div>'; (function(div,it){ var btnDel = div.querySelector('.btnDel'); btnDel.addEventListener('click', function(){ var all = loadExp().filter(function(x){return x.id!==it.id}); saveExp(all); renderExp(); }); var sx=0, dx=0; var del = div.querySelector('.swipeDel'); div.addEventListener('touchstart', function(e){ sx = e.changedTouches[0].clientX; }); div.addEventListener('touchmove', function(e){ dx = e.changedTouches[0].clientX - sx; del.style.opacity = Math.min(1, Math.max(0, (-dx)/80)); }); div.addEventListener('touchend', function(){ del.style.opacity = dx < -80 ? 1 : 0; sx=dx=0; }); div.addEventListener('click', function(e){ if(e.target.classList.contains('btnDel')) return; expDate.value = it.date; expAmt.value = it.amt; expCat.value = it.cat; expMemo.value = it.memo||''; }); })(div,it); listExp.appendChild(div); }
+      expSum.textContent = fmt(total); var payRec = load().find? load().find(function(r){return r.month===m}) : null; var monthlyNet = payRec? payRec.net : calcSafe().net; expRemain.textContent = fmt(Math.max(0, (monthlyNet||0) - total)); expHint.textContent = payRec? ('以 '+m+' 的薪資實領 '+fmt(monthlyNet)+' 元計算。') : '尚未建立該月薪資紀錄，暫以目前薪資輸入試算可用餘額。'; upExpChart(group); }
 
-      // 取得該月實領
-      const payRec = load().find(r=>r.month===m);
-      let monthlyNet = payRec? payRec.net : calc().net;
-      expRemain.textContent = fmt(Math.max(0, (monthlyNet||0) - total));
-      expHint.textContent = payRec? `以 ${m} 的薪資實領 ${fmt(monthlyNet)} 元計算。` : '尚未建立該月薪資紀錄，暫以目前薪資輸入試算可用餘額。';
-      upExpChart(group);
-    }
+    function addExp(){ var d = expDate && expDate.value ? expDate.value : new Date().toISOString().slice(0,10); var m = monthOf(d); if(expMonth) expMonth.value = m; var amt = Number(expAmt && expAmt.value ? expAmt.value : 0); if(!(amt>0)) { alert('請輸入金額'); return; } var rec = { id: Date.now()+''+Math.random().toString(16).slice(2), date:d, month:m, cat:(expCat && expCat.value ? expCat.value : '其他'), amt:amt, memo:(expMemo && expMemo.value ? expMemo.value : '') }; var arr = loadExp(); arr.push(rec); saveExp(arr); renderExp(); expAmt.value = ''; expMemo.value=''; }
 
-    function addExp(){
-      const d = expDate?.value || new Date().toISOString().slice(0,10);
-      const m = monthOf(d);
-      if(expMonth) expMonth.value = m;
-      const amt = Number(expAmt?.value||0);
-      if(!(amt>0)) { alert('請輸入金額'); return; }
-      const rec = { id: Date.now()+''+Math.random().toString(16).slice(2), date:d, month:m, cat:(expCat?.value||'其他'), amt:amt, memo:(expMemo?.value||'') };
-      const arr = loadExp(); arr.push(rec); saveExp(arr); renderExp();
-      // 清空快速輸入欄位（保留日期）
-      expAmt.value = ''; expMemo.value='';
-    }
+    if(btnAddExp) btnAddExp.addEventListener('click', addExp);
+    if(btnClrExpMonth) btnClrExpMonth.addEventListener('click', function(){ var m = expMonth && expMonth.value ? expMonth.value : monthOf(); if(!confirm('刪除 '+m+' 的全部支出？')) return; var arr = loadExp().filter(function(x){return x.month!==m}); saveExp(arr); renderExp(); });
+    if(btnExportExp) btnExportExp.addEventListener('click', function(){ var m = expMonth && expMonth.value ? expMonth.value : monthOf(); var data = JSON.stringify(loadExp().filter(function(x){return x.month===m}), null, 2); var blob = new Blob([data], {type:'application/json'}); var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'expenses-'+m+'.json'; a.click(); URL.revokeObjectURL(a.href); });
+    if(fileImportExp) fileImportExp.addEventListener('change', function(e){ var f = e.target.files && e.target.files[0]; if(!f) return; var rd = new FileReader(); rd.onload = function(){ try{ var arr = JSON.parse(rd.result); if(arr && arr.constructor===Array){ var all = loadExp().concat(arr); saveExp(all); renderExp(); alert('支出匯入完成'); } } catch(err){ alert('匯入失敗：檔案格式錯誤'); } }; rd.readAsText(f); });
 
-    btnAddExp?.addEventListener('click', addExp);
-    btnClrExpMonth?.addEventListener('click', ()=>{
-      const m = expMonth?.value || monthOf();
-      if(!confirm(`刪除 ${m} 的全部支出？`)) return;
-      const arr = loadExp().filter(x=>x.month!==m); saveExp(arr); renderExp();
-    });
-    btnExportExp?.addEventListener('click', ()=>{
-      const m = expMonth?.value || monthOf();
-      const data = JSON.stringify(loadExp().filter(x=>x.month===m), null, 2);
-      const blob = new Blob([data], {type:'application/json'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `expenses-${m}.json`; a.click(); URL.revokeObjectURL(a.href);
-    });
-    fileImportExp?.addEventListener('change', e=>{
-      const f = e.target.files?.[0]; if(!f) return; const rd = new FileReader();
-      rd.onload = () => { try{ const arr = JSON.parse(rd.result); if(Array.isArray(arr)){ const all = loadExp().concat(arr); saveExp(all); renderExp(); alert('支出匯入完成'); } }
-        catch(err){ alert('匯入失敗：檔案格式錯誤'); } };
-      rd.readAsText(f);
-    });
+    if(salary) salary.addEventListener('input', renderExp);
+    if(expMonth) expMonth.addEventListener('change', renderExp);
 
-    // 薪資或月份變更時，更新支出摘要
-    salary?.addEventListener('input', renderExp);
-    expMonth?.addEventListener('change', renderExp);
-
-    // init
-    month && (month.value = new Date().toISOString().slice(0,7));
-    expMonth && (expMonth.value = new Date().toISOString().slice(0,7));
-    expDate && (expDate.value = new Date().toISOString().slice(0,10));
+    // ===== init =====
+    if(month) month.value = new Date().toISOString().slice(0,7);
+    if(expMonth) expMonth.value = new Date().toISOString().slice(0,7);
+    if(expDate) expDate.value = new Date().toISOString().slice(0,10);
     buildGradeOptions();
-    calcSafe();
-    render();
-    renderExp();
+    // 初始觸發計算（再延遲一次避免某些瀏覽器延後繪製）
+    calcSafe(); setTimeout(calcSafe, 0);
+    render(); renderExp();
   </script>
 </body>
 </html>
