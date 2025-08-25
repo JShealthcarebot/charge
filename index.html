@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>月記帳｜薪資扣除試算 & 記錄</title>
+  <title>月記帳｜薪資扣除試算 & 記錄（含 114 級距自動帶入）</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -38,24 +38,13 @@
       font-family:"Noto Sans TC",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; 
       background:var(--bg); color:var(--text);
     }
-    header{
-      position:sticky;top:0;z-index:5;
-      backdrop-filter:saturate(150%) blur(10px); background:transparent; 
-      padding:16px 12px 0;
-    }
+    header{ position:sticky;top:0;z-index:5; backdrop-filter:saturate(150%) blur(10px); background:transparent; padding:16px 12px 0; }
     .wrap{max-width:980px;margin:0 auto;padding:12px;}
-    .title{
-      display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-    }
+    .title{ display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
     .title h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.5px}
     .badge{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--card);box-shadow:0 6px 24px rgba(0,0,0,.07);border:1px solid rgba(0,0,0,.05)}
 
-    .card{
-      background:var(--card);border:1px solid rgba(255,255,255,.35);
-      border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.12);
-      backdrop-filter: blur(12px) saturate(160%);
-      padding:16px;margin:8px 0;position:relative;overflow:hidden;
-    }
+    .card{ background:var(--card);border:1px solid rgba(255,255,255,.35); border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.12); backdrop-filter: blur(12px) saturate(160%); padding:16px;margin:8px 0;position:relative;overflow:hidden; }
     .row{display:grid;grid-template-columns:1fr;gap:12px}
     @media (min-width:720px){.row{grid-template-columns:1.25fr .75fr}}
 
@@ -69,50 +58,30 @@
     .switch input{width:auto;height:auto}
 
     .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-    .round-btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;
-      height:46px;padding:0 18px;border-radius:999px;border:0;cursor:pointer;
-      background:linear-gradient(135deg,var(--brand),#22c1c3); color:white;font-weight:600;
-      box-shadow:0 10px 24px rgba(79,70,229,.35); transform:translateY(0);
-      transition:.2s transform cubic-bezier(.2,.8,.2,1), filter .2s;
-    }
+    .round-btn{ display:inline-flex;align-items:center;justify-content:center;gap:8px; height:46px;padding:0 18px;border-radius:999px;border:0;cursor:pointer; background:linear-gradient(135deg,var(--brand),#22c1c3); color:white;font-weight:600; box-shadow:0 10px 24px rgba(79,70,229,.35); transform:translateY(0); transition:.2s transform cubic-bezier(.2,.8,.2,1), filter .2s; }
     .round-btn:hover{transform:translateY(-2px)}
     .round-btn:active{transform:translateY(0)}
     .ghost{background:transparent;color:var(--brand);border:1.5px dashed var(--brand)}
     .danger{background:linear-gradient(135deg,var(--danger),#ef5da8); box-shadow:0 10px 24px rgba(239,68,68,.35)}
 
     .totals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .pill{
-      background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.05);
-      border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:600
-    }
+    .pill{ background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.05); border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:600 }
     .dark .pill{background:rgba(0,0,0,.3);border-color:rgba(255,255,255,.08)}
 
     .list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
-    .item{
-      background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06);
-      border-radius:16px;padding:12px 14px;position:relative;overflow:hidden;
-      box-shadow:0 10px 24px rgba(0,0,0,.09);
-      touch-action: pan-y;
-    }
+    .item{ background:rgba(255,255,255,.75);border:1px solid rgba(0,0,0,.06); border-radius:16px;padding:12px 14px;position:relative;overflow:hidden; box-shadow:0 10px 24px rgba(0,0,0,.09); touch-action: pan-y; }
     .dark .item{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.08)}
     .item h4{margin:0 0 6px 0;font-size:15px}
     .meta{color:var(--muted);font-size:12px;display:flex;flex-wrap:wrap;gap:10px}
     .sum{margin-top:6px;font-weight:700}
-    .swipeDel{
-      position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;
-      padding-right:14px;pointer-events:none;opacity:.0;transition:opacity .15s;
-      background:linear-gradient(90deg,transparent, rgba(239,68,68,.06));
-    }
+    .swipeDel{ position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end; padding-right:14px;pointer-events:none;opacity:.0;transition:opacity .15s; background:linear-gradient(90deg,transparent, rgba(239,68,68,.06)); }
     .swipeDel .btnDel{pointer-events:auto}
     .btnDel{border:0;background:var(--danger);color:#fff;border-radius:12px;padding:8px 12px;font-weight:700}
 
     .footerNote{color:var(--muted);font-size:12px;margin-top:8px}
     .chip{padding:2px 8px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.65)}
     .dark .chip{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.08)}
-
     .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.12),transparent);margin:8px 0}
-
     .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   </style>
 </head>
@@ -120,7 +89,7 @@
   <header>
     <div class="wrap title">
       <h1>月記帳｜薪資扣除試算 & 記錄</h1>
-      <span class="badge">圓形按鈕・暗色模式・滑動刪除</span>
+      <span class="badge">114(2025) 級距自動帶入・圓形按鈕・暗色模式</span>
       <div class="flex" style="margin-left:auto">
         <button id="toggleDark" class="round-btn ghost" title="暗色模式">🌙 暗色</button>
       </div>
@@ -138,6 +107,15 @@
           <div class="field">
             <label>本月薪資（含加班津貼）</label>
             <input id="salary" type="number" inputmode="decimal" placeholder="例如 42000" />
+          </div>
+
+          <div class="field">
+            <label class="flex"><span>依 114(2025) 級距自動帶入（員工負擔：勞保＋健保）</span> <span class="chip">以薪資就近「較低級距」</span></label>
+            <div class="flex">
+              <label class="switch"><input id="chkAutoGrade" type="checkbox"> 開啟</label>
+              <select id="gradeSelect" disabled style="width:160px"></select>
+              <span id="gradeInfo" class="chip">未啟用</span>
+            </div>
           </div>
 
           <div class="hr"></div>
@@ -174,8 +152,7 @@
           </div>
 
           <datalist id="insuredList">
-            <option value="26400"></option>
-            <option value="27600"></option>
+            <option value="28590"></option>
             <option value="28800"></option>
             <option value="30300"></option>
             <option value="31800"></option>
@@ -188,6 +165,16 @@
             <option value="43900"></option>
             <option value="45800"></option>
             <option value="48200"></option>
+            <option value="50600"></option>
+            <option value="53000"></option>
+            <option value="55400"></option>
+            <option value="57800"></option>
+            <option value="60800"></option>
+            <option value="63800"></option>
+            <option value="66800"></option>
+            <option value="69800"></option>
+            <option value="72800"></option>
+            <option value="76500"></option>
           </datalist>
 
           <div class="field">
@@ -215,7 +202,7 @@
               <div class="pill">實領<span id="netPay">0</span></div>
             </div>
             <canvas id="pie" height="220" style="margin-top:8px"></canvas>
-            <div class="footerNote">提示：勞保/健保分擔比例與級距會不定期調整，這裡提供 <b>彈性欄位</b> 讓你填入公司實際金額或自行設定分擔率試算。</div>
+            <div class="footerNote">提示：表格採用 114(2025) 年度常見級距與負擔金額（員工端）。仍請以公司實際投保與單位通知為準。</div>
           </div>
 
           <div class="card" style="margin-top:12px">
@@ -255,6 +242,11 @@
     const $ = s=>document.querySelector(s);
     const month = $('#month');
     const salary = $('#salary');
+
+    const chkAutoGrade = $('#chkAutoGrade');
+    const gradeSelect = $('#gradeSelect');
+    const gradeInfo = $('#gradeInfo');
+
     const chkPension = $('#chkPension');
     const pensionRate = $('#pensionRate');
     const pensionAmtView = $('#pensionAmtView');
@@ -295,51 +287,101 @@
     const toNum = v => v===''||v==null?0:Number(v);
     const clamp = (n,min=0)=> isFinite(n)? Math.max(n,min):0;
 
+    // ===== 114(2025) 級距表（員工負擔：勞保/健保/合計） =====
+    const GRADES = [
+      {g:28590, lb:715,  nh:443,  t:1158},
+      {g:28800, lb:720,  nh:447,  t:1167},
+      {g:30300, lb:758,  nh:470,  t:1228},
+      {g:31800, lb:795,  nh:493,  t:1288},
+      {g:33300, lb:833,  nh:516,  t:1349},
+      {g:34800, lb:870,  nh:540,  t:1410},
+      {g:36300, lb:908,  nh:563,  t:1471},
+      {g:38200, lb:955,  nh:592,  t:1547},
+      {g:40100, lb:1002, nh:622,  t:1624},
+      {g:42000, lb:1060, nh:651,  t:1711},
+      {g:43900, lb:1098, nh:681,  t:1779},
+      {g:45800, lb:1145, nh:710,  t:1855},
+      {g:48200, lb:1145, nh:748,  t:1893},
+      {g:50600, lb:1145, nh:785,  t:1930},
+      {g:53000, lb:1145, nh:822,  t:1967},
+      {g:55400, lb:1145, nh:859,  t:2004},
+      {g:57800, lb:1145, nh:896,  t:2041},
+      {g:60800, lb:1145, nh:943,  t:2088},
+      {g:63800, lb:1145, nh:990,  t:2135},
+      {g:66800, lb:1145, nh:1036, t:2181},
+      {g:69800, lb:1145, nh:1083, t:2228},
+      {g:72800, lb:1145, nh:1129, t:2274},
+      {g:76500, lb:1145, nh:1187, t:2332},
+    ];
+
+    // 建立下拉級距
+    function buildGradeOptions(){
+      gradeSelect.innerHTML = '';
+      for(const r of GRADES){
+        const opt = document.createElement('option');
+        opt.value = r.g;
+        opt.textContent = `${r.g.toLocaleString()}（勞保 ${r.lb.toLocaleString()}／健保 ${r.nh.toLocaleString()}／合計 ${r.t.toLocaleString()}）`;
+        gradeSelect.appendChild(opt);
+      }
+    }
+
+    // 依薪資選擇級距（就近較低）
+    function pickGradeBySalary(base){
+      let best = GRADES[0];
+      for(const r of GRADES){ if(base >= r.g) best = r; else break; }
+      return best;
+    }
+
+    // 當前是否啟用自動級距
+    function applyAutoGrade(){
+      const enabled = chkAutoGrade.checked;
+      gradeSelect.disabled = !enabled;
+      if(!enabled){ gradeInfo.textContent = '未啟用'; return; }
+
+      const base = clamp(toNum(salary.value));
+      // 以薪資挑級距（若下拉已選，優先用下拉）
+      let row = GRADES.find(r=>r.g===toNum(gradeSelect.value));
+      if(!row){ row = pickGradeBySalary(base); gradeSelect.value = String(row.g); }
+
+      // 將員工端金額帶入「金額直填」
+      lbAmount.value = row.lb; lbInsured.value = ''; lbRate.value = '';
+      nhAmount.value = row.nh; nhInsured.value = ''; nhRate.value = '';
+
+      gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元`;
+    }
+
     // ===== Chart =====
     let pie; const ctx = document.getElementById('pie');
-
     function upChart(parts){
       const labels = parts.filter(p=>p.v>0).map(p=>p.k);
       const data = parts.filter(p=>p.v>0).map(p=>p.v);
       if(!pie){
-        pie = new Chart(ctx,{
-          type:'doughnut',
-          data:{labels,datasets:[{data} ]},
-          options:{plugins:{legend:{position:'bottom'}},cutout:'60%'}
-        });
-      }else{
-        pie.data.labels = labels;
-        pie.data.datasets[0].data = data;
-        pie.update();
-      }
+        pie = new Chart(ctx,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} });
+      }else{ pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); }
     }
 
     // ===== Live calc =====
     function calc(){
       const base = clamp(toNum(salary.value));
-      // pension
+
+      // 若啟用自動級距，先帶入金額
+      if(chkAutoGrade.checked){ applyAutoGrade(); }
+
+      // 勞退
       const pAmt = chkPension.checked? Math.round(base * clamp(toNum(pensionRate.value))/100) : 0;
       pensionAmtView.textContent = '金額：' + fmt(pAmt);
 
-      // labor insurance either amount or insured * rate%
+      // 勞保：金額直填優先，否則用級距*率
       let lbAmt = clamp(toNum(lbAmount.value));
-      if(lbAmt===0){
-        const ins = clamp(toNum(lbInsured.value));
-        const r = clamp(toNum(lbRate.value));
-        lbAmt = Math.round(ins * r / 100);
-      }
+      if(lbAmt===0){ const ins = clamp(toNum(lbInsured.value)); const r = clamp(toNum(lbRate.value)); lbAmt = Math.round(ins * r / 100); }
       lbAmtView.textContent = '金額：' + fmt(lbAmt);
 
-      // health insurance
+      // 健保
       let nhAmt = clamp(toNum(nhAmount.value));
-      if(nhAmt===0){
-        const ins = clamp(toNum(nhInsured.value));
-        const r = clamp(toNum(nhRate.value));
-        nhAmt = Math.round(ins * r / 100);
-      }
+      if(nhAmt===0){ const ins = clamp(toNum(nhInsured.value)); const r = clamp(toNum(nhRate.value)); nhAmt = Math.round(ins * r / 100); }
       nhAmtView.textContent = '金額：' + fmt(nhAmt);
 
-      // welfare
+      // 福利金
       const wfAmt = chkWelfare.checked? Math.round(base * clamp(toNum(welfareRate.value))/100) : 0;
       welfareAmtView.textContent = '金額：' + fmt(wfAmt);
 
@@ -354,12 +396,12 @@
         {k:'健保', v:nhAmt},
         {k:'福利金', v:wfAmt},
       ]);
-
       return { base, pAmt, lbAmt, nhAmt, wfAmt, totalDeduct, net };
     }
 
+    // Live events
     ['input','change','keyup'].forEach(evt=>{
-      [salary, chkPension, pensionRate, lbAmount, lbInsured, lbRate, nhAmount, nhInsured, nhRate, chkWelfare, welfareRate]
+      [salary, chkAutoGrade, gradeSelect, chkPension, pensionRate, lbAmount, lbInsured, lbRate, nhAmount, nhInsured, nhRate, chkWelfare, welfareRate]
         .forEach(el=>el.addEventListener(evt, calc));
     });
 
@@ -367,16 +409,11 @@
     btnReverse.addEventListener('click',()=>{
       const amt = clamp(toNum(revAmt.value));
       const pct = clamp(toNum(revPct.value));
-      if(amt>0 && pct>0){
-        const base = Math.round( amt / (pct/100) );
-        revBase.textContent = fmt(base);
-      }
+      if(amt>0 && pct>0){ const base = Math.round( amt / (pct/100) ); revBase.textContent = fmt(base); }
     });
 
     // ===== Records =====
-    function load(){
-      try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return [] }
-    }
+    function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return [] } }
     function save(arr){ localStorage.setItem(LS_KEY, JSON.stringify(arr)); }
 
     function render(){
@@ -416,17 +453,15 @@
         // click to load for edit
         div.addEventListener('click', e=>{
           if(e.target.classList.contains('btnDel')) return;
-          // load values back
           month.value = rec.month; salary.value = rec.base;
           chkPension.checked = rec.pAmt>0; pensionRate.value = rec.pRate;
-          // 勞保/健保：只回填金額（最準確），其他欄位清空供重算
+          // 金額直填回填，其他清空供重算
           lbAmount.value = rec.lbAmt; lbInsured.value = ''; lbRate.value = '';
           nhAmount.value = rec.nhAmt; nhInsured.value = ''; nhRate.value = '';
           chkWelfare.checked = rec.wfAmt>0; welfareRate.value = rec.wfRate;
           calc();
           window.scrollTo({top:0, behavior:'smooth'});
         });
-
         list.appendChild(div);
       }
     }
@@ -477,9 +512,9 @@
       if(confirm('確定要清空全部紀錄？此動作無法復原。')){ save([]); render(); }
     });
 
-    // init defaults
+    // init
     month.value = new Date().toISOString().slice(0,7);
-    salary.value = '';
+    buildGradeOptions();
     calc();
     render();
   </script>
