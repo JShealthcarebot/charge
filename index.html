@@ -468,31 +468,38 @@
 
     // ===== Live calc =====
     function calc(){
-      // 防呆：若未填薪資，清零顯示
+      // 若無薪資欄位，回傳歸零
       if(!salary){ return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; }
-      
-      
       const base = clamp(toNum(salary.value));
-      // 預設啟用自動級距、勞退6%、福利金0.5%
-      if(chkAutoGrade) chkAutoGrade.checked = true;
-      if(chkPension){ chkPension.checked = true; pensionRate.value = pensionRate.value||6; }
-      if(chkWelfare){ chkWelfare.checked = true; welfareRate.value = welfareRate.value||0.5; }
 
-      applyAutoGrade();
+      // 依薪資選級距（向上取整）；若使用者手動挑選且不低於薪資，則沿用
+      let row = pickGradeBySalary(base);
+      if(gradeSelect && manualGrade){
+        const sel = Number(gradeSelect.value||0);
+        if(sel >= base){ const f = GRADES.find(r=>r.g===sel); if(f) row = f; }
+      } else if(gradeSelect){ gradeSelect.value = String(row.g); }
+      lastGradeRow = row;
+      if(gradeInfo){
+        const over = base > GRADES[GRADES.length-1].g;
+        gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元` + (over? '（超出表上限，已用最高級距）':'');
+      }
 
+      // 勞退 / 福利
       const pAmt = Math.round(base * clamp(toNum(pensionRate?.value||6))/100);
-      if(pensionAmtView) pensionAmtView.textContent = '金額：' + fmt(pAmt);
-
-      let lbAmt = clamp(toNum(lbAmount?.value));
-      if(lbAmt===0){ const ins = clamp(toNum(lbInsured?.value)); const r = clamp(toNum(lbRate?.value)); lbAmt = Math.round(ins * r / 100); }
-      if(lbAmtView) lbAmtView.textContent = '金額：' + fmt(lbAmt);
-
-      let nhAmt = clamp(toNum(nhAmount?.value));
-      if(nhAmt===0){ const ins = clamp(toNum(nhInsured?.value)); const r = clamp(toNum(nhRate?.value)); nhAmt = Math.round(ins * r / 100); }
-      if(nhAmtView) nhAmtView.textContent = '金額：' + fmt(nhAmt);
-
       const wfAmt = Math.round(base * clamp(toNum(welfareRate?.value||0.5))/100);
+      if(pensionAmtView) pensionAmtView.textContent = '金額：' + fmt(pAmt);
       if(welfareAmtView) welfareAmtView.textContent = '金額：' + fmt(wfAmt);
+
+      // 勞保/健保：優先採用手動金額；否則用級距金額；再否則用「級距×%」
+      let lbAmt = clamp(toNum(lbAmount?.value));
+      let nhAmt = clamp(toNum(nhAmount?.value));
+      if(!(lbAmt>0)) lbAmt = row.lb; // 預設用級距
+      if(!(nhAmt>0)) nhAmt = row.nh;
+      // 備用：若真的要用級距×%（ins*rate），維持相容
+      if(!(lbAmt>0)){ const ins = clamp(toNum(lbInsured?.value)); const r = clamp(toNum(lbRate?.value)); if(ins>0 && r>0) lbAmt = Math.round(ins*r/100); }
+      if(!(nhAmt>0)){ const ins = clamp(toNum(nhInsured?.value)); const r = clamp(toNum(nhRate?.value)); if(ins>0 && r>0) nhAmt = Math.round(ins*r/100); }
+      if(lbAmtView) lbAmtView.textContent = '金額：' + fmt(lbAmt);
+      if(nhAmtView) nhAmtView.textContent = '金額：' + fmt(nhAmt);
 
       const totalDeduct = pAmt + lbAmt + nhAmt + wfAmt;
       const net = Math.max(0, base - totalDeduct);
