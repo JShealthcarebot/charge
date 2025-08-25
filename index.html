@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root{ --bg:linear-gradient(135deg,#eaf6ff,#f6f9ff); --card:rgba(255,255,255,.85); --text:#1f2937; --muted:#6b7280; --brand:#4f46e5; --danger:#ef4444; --ring:rgba(79,70,229,.25);} 
-    .dark{ --bg: radial-gradient(1200px 800px at 10% 10%, #1f2937, #0b1020); --card:rgba(17,24,39,.75); --text:#e5e7eb; --muted:#9ca3af; --brand:#8b5cf6; --danger:#f87171; --ring:rgba(139,92,246,.25); color-scheme:dark; }
+    .dark{ --bg: radial-gradient(1200px 800px at 10% 10%, #1f2937, #0b1020); --card:rgba(17,24,39,.75); --text:#f8fafc; --muted:#cbd5e1; --brand:#8b5cf6; --danger:#f87171; --ring:rgba(139,92,246,.25); color-scheme:dark; }
     *{box-sizing:border-box}
     body{margin:0;min-height:100dvh;display:flex;flex-direction:column;gap:16px;font-family:"Noto Sans TC",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text)}
     header{position:sticky;top:0;z-index:5;background:transparent;padding:16px 12px 0;backdrop-filter:saturate(150%) blur(10px)}
@@ -24,10 +24,10 @@
     .field{display:flex;flex-direction:column;gap:6px}
     label{font-size:13px;color:var(--muted)}
     input,select{height:42px;padding:0 12px;border-radius:12px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.7);outline:none;color:inherit}
-    .dark input,.dark select{background:rgba(0,0,0,.25);border-color:rgba(255,255,255,.08)}
+    .dark input,.dark select{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.22)}
     input:focus,select:focus{box-shadow:0 0 0 6px var(--ring);border-color:transparent}
     .pill{background:rgba(255,255,255,.6);border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;font-weight:600}
-    .dark .pill{background:rgba(0,0,0,.3);border-color:rgba(255,255,255,.08)}
+    .dark .pill{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.22)}
     .totals{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
     .round-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 18px;border-radius:999px;border:0;cursor:pointer;background:linear-gradient(135deg,var(--brand),#22c1c3);color:#fff;font-weight:600;box-shadow:0 10px 24px rgba(79,70,229,.35)}
@@ -190,13 +190,26 @@
     function toNum(v){ return (v===''||v==null)?0:Number(v) }
     function clamp(n,min){ if(min===void 0) min=0; return isFinite(n)?Math.max(n,min):0 }
     function st(el,txt){ if(el){ el.textContent = String(txt); } }
+    function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#000'; }
+    // 統一色票（不同項目固定不同顏色）
+    var COLOR_MAP = { '自提6%':'#e11d48', '勞保':'#2563eb', '健保':'#0ea5a8', '福利金':'#f59e0b' };
+    var EXP_PALETTE = ['#2563eb','#0ea5a8','#f59e0b','#e11d48','#10b981','#8b5cf6','#f97316','#14b8a6','#22c55e','#ef4444'];
 
     // ===== Chart 安全更新 =====
     var pie, ctx = document.getElementById('pie');
     var pieExp, ctxExp = document.getElementById('pieExp');
     function upChart(parts){
       try{
-        var labels=(parts||[]).filter(function(p){return p.v>0}).map(function(p){return p.k});
+        var rows=(parts||[]).filter(function(p){return p.v>0});
+        var labels=rows.map(function(p){return p.k});
+        var data=rows.map(function(p){return p.v});
+        var colors=labels.map(function(k){ return COLOR_MAP[k] || '#94a3b8'; });
+        if(typeof Chart==='undefined' || !ctx){ return; }
+        var legendColor = cssVar('--text');
+        if(!pie){ if(labels.length===0) return; pie = new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:legendColor}}},cutout:'60%'}}); }
+        else{ pie.data.labels=labels; pie.data.datasets[0].data=data; pie.data.datasets[0].backgroundColor=colors; pie.options.plugins.legend.labels.color=legendColor; pie.update(); }
+      }catch(e){}
+    }).map(function(p){return p.k});
         var data=(parts||[]).filter(function(p){return p.v>0}).map(function(p){return p.v});
         if(typeof Chart==='undefined' || !ctx){ return; }
         if(!pie){ if(labels.length===0) return; pie = new Chart(ctx,{type:'doughnut',data:{labels:labels,datasets:[{data:data}]},options:{plugins:{legend:{position:'bottom'}},cutout:'60%'}}); }
@@ -205,7 +218,15 @@
     }
     function upExpChart(group){
       try{
-        var labels=Object.keys(group||{}); var data=labels.map(function(k){return group[k]});
+        var labels=Object.keys(group||{});
+        var data=labels.map(function(k){return group[k]});
+        var colors=labels.map(function(_,i){ return EXP_PALETTE[i % EXP_PALETTE.length]; });
+        if(typeof Chart==='undefined' || !ctxExp){ return; }
+        var legendColor = cssVar('--text');
+        if(!pieExp){ if(labels.length===0) return; pieExp = new Chart(ctxExp,{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors,borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{color:legendColor}}},cutout:'60%'}}); }
+        else{ pieExp.data.labels=labels; pieExp.data.datasets[0].data=data; pieExp.data.datasets[0].backgroundColor=colors; pieExp.options.plugins.legend.labels.color=legendColor; pieExp.update(); }
+      }catch(e){}
+    }); var data=labels.map(function(k){return group[k]});
         if(typeof Chart==='undefined' || !ctxExp){ return; }
         if(!pieExp){ if(labels.length===0) return; pieExp = new Chart(ctxExp,{type:'doughnut',data:{labels:labels,datasets:[{data:data}]},options:{plugins:{legend:{position:'bottom'}},cutout:'60%'}}); }
         else{ pieExp.data.labels=labels; pieExp.data.datasets[0].data=data; pieExp.update(); }
