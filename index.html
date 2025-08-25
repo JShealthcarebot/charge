@@ -108,6 +108,73 @@
       </div>
     </section>
 
+    <!-- 本月支出記錄（只需填資料即可） -->
+    <section class="card">
+      <div class="row">
+        <div>
+          <div class="field">
+            <label>支出月份</label>
+            <input id="expMonth" type="month" />
+          </div>
+          <div class="row" style="grid-template-columns:1fr 1fr">
+            <div class="field">
+              <label>日期</label>
+              <input id="expDate" type="date" />
+            </div>
+            <div class="field">
+              <label>金額（元）</label>
+              <input id="expAmt" type="number" inputmode="decimal" placeholder="例如 120" />
+            </div>
+          </div>
+          <div class="row" style="grid-template-columns:1fr 1fr">
+            <div class="field">
+              <label>分類</label>
+              <select id="expCat">
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+                <option value="房租/房貸">房租/房貸</option>
+                <option value="水電瓦斯">水電瓦斯</option>
+                <option value="手機網路">手機網路</option>
+                <option value="醫療/保險">醫療/保險</option>
+                <option value="購物/娛樂">購物/娛樂</option>
+                <option value="稅費/手續費">稅費/手續費</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>備註</label>
+              <input id="expMemo" type="text" placeholder="可留空" />
+            </div>
+          </div>
+
+          <div class="btns">
+            <button id="btnAddExp" class="round-btn">➕ 新增支出</button>
+            <button id="btnClrExpMonth" class="round-btn danger">🗑️ 刪除本月全部支出</button>
+            <button id="btnExportExp" class="round-btn">⬇️ 匯出本月支出</button>
+            <label class="round-btn" for="fileImportExp" style="cursor:pointer">⬆️ 匯入支出<input id="fileImportExp" type="file" accept="application/json" style="display:none"></label>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label>本月摘要</label>
+            <div class="totals">
+              <div class="pill">本月支出合計 <span id="expSum">0</span></div>
+              <div class="pill">本月可用餘額 <span id="expRemain">0</span></div>
+            </div>
+            <div class="footerNote" id="expHint">—</div>
+            <canvas id="pieExp" height="220" style="margin-top:8px"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="flex" style="justify-content:space-between;align-items:center">
+        <h3 style="margin:0">本月支出清單</h3>
+        <span class="chip">左右滑動可刪除，點擊可載入編輯</span>
+      </div>
+      <div id="listExp" class="list"></div>
+    </section>
+
     <!-- 進階設定：需要時再展開（保留手動/級距×%） -->
     <section class="card">
       <details id="advDetails">
@@ -268,6 +335,10 @@
     const fileImport = $('#fileImport');
     const btnClearAll = $('#btnClearAll');
 
+    // 支出區域
+    const expMonth = $('#expMonth');
+    const expDate = $('#
+
     const list = $('#list');
 
     const revAmt = $('#revAmt');
@@ -276,6 +347,7 @@
     const revBase = $('#revBase');
 
     const LS_KEY = 'paybook:records';
+    const LS_EXP = 'paybook:expenses';
 
     // ===== Utils =====
     const fmt = n => Number(n||0).toLocaleString('zh-TW', {maximumFractionDigits:0});
@@ -293,7 +365,7 @@
       {g:36300, lb:908,  nh:563,  t:1471},
       {g:38200, lb:955,  nh:592,  t:1547},
       {g:40100, lb:1002, nh:622,  t:1624},
-      {g:42000, lb:1060, nh:651,  t:1711},
+      {g:42000, lb:1050, nh:651,  t:1701},
       {g:43900, lb:1098, nh:681,  t:1779},
       {g:45800, lb:1145, nh:710,  t:1855},
       {g:48200, lb:1145, nh:748,  t:1893},
@@ -328,14 +400,19 @@
       return best;
     }
 
-    let lastGradeRow = null;
+    let lastGradeRow = null; let manualGrade = false; // 是否使用者手動選級距
     function applyAutoGrade(){
       const enabled = !chkAutoGrade || chkAutoGrade.checked; // 簡易模式預設啟用
       if(gradeSelect) gradeSelect.disabled = !enabled;
       if(!enabled){ if(gradeInfo) gradeInfo.textContent = '未啟用'; lastGradeRow=null; return; }
       const base = clamp(toNum(salary.value));
-      let row = gradeSelect ? GRADES.find(r=>String(r.g)===String(gradeSelect.value)) : null;
-      if(!row){ row = pickGradeBySalary(base); if(gradeSelect) gradeSelect.value = String(row.g); }
+      let row = null;
+      if(gradeSelect && manualGrade && gradeSelect.value){
+        row = GRADES.find(r=>String(r.g)===String(gradeSelect.value));
+      } else {
+        row = pickGradeBySalary(base);
+        if(gradeSelect) gradeSelect.value = String(row.g);
+      }
       // 將員工端金額帶入「金額直填」
       if(lbAmount) lbAmount.value = row.lb;
       if(lbInsured) lbInsured.value = '';
@@ -408,6 +485,9 @@
         .filter(Boolean)
         .forEach(el=>el.addEventListener(evt, calc));
     });
+    // 薪資變動時，恢復自動級距模式
+    if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
+    if(gradeSelect){ gradeSelect.addEventListener('change', ()=>{ manualGrade = true; }); }
 
     // 反推
     if(btnReverse) btnReverse.addEventListener('click',()=>{
