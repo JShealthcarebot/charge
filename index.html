@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>月記帳</title>
+  <title>月記帳｜薪資扣除試算 & 記錄（114 級距自動帶入｜只填薪資）</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -444,20 +444,34 @@
     let pie; const ctx = document.getElementById('pie');
     let pieExp; const ctxExp = document.getElementById('pieExp');
     function upChart(parts){
-      const labels = parts.filter(p=>p.v>0).map(p=>p.k);
-      const data = parts.filter(p=>p.v>0).map(p=>p.v);
-      if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
+      try{
+        const labels = parts.filter(p=>p.v>0).map(p=>p.k);
+        const data = parts.filter(p=>p.v>0).map(p=>p.v);
+        if(typeof Chart==='undefined' || !ctx){ return; }
+        if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
+        else{ pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); }
+      }catch(e){ /* 忽略圖表錯誤，避免阻斷計算 */ }
+    }]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
       else{ pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); }
     }
     function upExpChart(group){
-      const labels = Object.keys(group);
-      const data = labels.map(k=>group[k]);
-      if(!pieExp){ pieExp = new Chart(ctxExp,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
+      try{
+        if(typeof Chart==='undefined' || !ctxExp){ return; }
+        const labels = Object.keys(group);
+        const data = labels.map(k=>group[k]);
+        if(!pieExp){ pieExp = new Chart(ctxExp,{ type:'doughnut', data:{labels,datasets:[{data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
+        else{ pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); }
+      }catch(e){ /* 忽略圖表錯誤 */ }
+    }]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); }
       else{ pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); }
     }
 
     // ===== Live calc =====
     function calc(){
+      // 防呆：若未填薪資，清零顯示
+      if(!salary){ return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; }
+      
+      
       const base = clamp(toNum(salary.value));
       // 預設啟用自動級距、勞退6%、福利金0.5%
       if(chkAutoGrade) chkAutoGrade.checked = true;
@@ -503,24 +517,26 @@
     }
 
     // 事件
+    function calcSafe(){ try{ return calc(); } catch(e){ console.error('calc error', e); return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 }; } }
     ['input','change','keyup'].forEach(evt=>{
       [salary, gradeSelect, pensionRate, lbAmount, lbInsured, lbRate, nhAmount, nhInsured, nhRate, welfareRate]
         .filter(Boolean)
-        .forEach(el=>el.addEventListener(evt, calc));
+        .forEach(el=>el.addEventListener(evt, calcSafe));
     });
+    // 薪資變動時，恢復自動級距模式
+    if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
     // 薪資變動時，恢復自動級距模式
     if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
     if(gradeSelect){ gradeSelect.addEventListener('change', ()=>{
       const base = clamp(toNum(salary.value));
       const sel = Number(gradeSelect.value||0);
-      // 不允許選擇低於實際薪資的級距 → 自動改為向上最近級距
       if(sel < base){
         const row = pickGradeBySalary(base);
         gradeSelect.value = String(row.g);
         alert(`投保薪資不得低於實際薪資，已改為 ${row.g.toLocaleString()} 級距`);
       }
       manualGrade = true;
-      calc();
+      calcSafe();
     }); }
 
     // 反推
@@ -572,7 +588,7 @@
 
     function addOrUpdate(){
       const m = (month && month.value) || new Date().toISOString().slice(0,7);
-      const c = calc();
+      const c = calcSafe();
       const rec = { month:m, base:c.base, pRate:6, pAmt:c.pAmt, lbAmt:c.lbAmt, nhAmt:c.nhAmt, wfRate:0.5, wfAmt:c.wfAmt, totalDeduct:c.totalDeduct, net:c.net };
       const arr = load();
       const i = arr.findIndex(x=>x.month===m);
@@ -683,7 +699,7 @@
     expMonth && (expMonth.value = new Date().toISOString().slice(0,7));
     expDate && (expDate.value = new Date().toISOString().slice(0,10));
     buildGradeOptions();
-    calc();
+    calcSafe();
     render();
     renderExp();
   </script>
