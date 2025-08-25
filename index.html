@@ -348,13 +348,35 @@
     // ===== Chart =====
     var pie; var ctx = document.getElementById('pie');
     var pieExp; var ctxExp = document.getElementById('pieExp');
-    function upChart(parts){ try{ var labels = parts.filter(function(p){return p.v>0}).map(function(p){return p.k}); var data = parts.filter(function(p){return p.v>0}).map(function(p){return p.v}); if(typeof Chart==='undefined' || !ctx){ return; } if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); } else { pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); } }catch(e){} }
+    function upChart(parts){
+      try{
+        var labels = (parts||[]).filter(function(p){return p.v>0}).map(function(p){return p.k});
+        var data = (parts||[]).filter(function(p){return p.v>0}).map(function(p){return p.v});
+        if(typeof Chart==='undefined' || !ctx){ return; }
+        if(!pie){
+          if(labels.length===0) return; // 沒資料就不建立圖
+          pie = new Chart(ctx,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} });
+        } else {
+          pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update();
+        }
+      }catch(e){}
+    }).map(function(p){return p.k}); var data = parts.filter(function(p){return p.v>0}).map(function(p){return p.v}); if(typeof Chart==='undefined' || !ctx){ return; } if(!pie){ pie = new Chart(ctx,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); } else { pie.data.labels = labels; pie.data.datasets[0].data = data; pie.update(); } }catch(e){} }
     function upExpChart(group){ try{ if(typeof Chart==='undefined' || !ctxExp){ return; } var labels = Object.keys(group); var data = labels.map(function(k){return group[k]}); if(!pieExp){ pieExp = new Chart(ctxExp,{ type:'doughnut', data:{labels:labels,datasets:[{data:data}]}, options:{plugins:{legend:{position:'bottom'}},cutout:'60%'} }); } else { pieExp.data.labels = labels; pieExp.data.datasets[0].data = data; pieExp.update(); } }catch(e){} }
 
     // ===== Live calc =====
     function calc(){
       if(!salary) return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 };
       var base = clamp(toNum(salary.value));
+      // 若尚未輸入薪資，全部歸零，不自動挑級距
+      if(!(base>0)){
+        st(pensionAmtView,'金額：0'); st(welfareAmtView,'金額：0');
+        st(lbAmtView,'金額：0'); st(nhAmtView,'金額：0');
+        st(deductTotal,'0'); st(netPay,'0');
+        st(vLB,'0'); st(vNH,'0'); st(vP,'0'); st(vWF,'0'); st(vTotal,'0'); st(vGrade,'—');
+        if(gradeInfo) gradeInfo.textContent = '—';
+        upChart([]);
+        return { base:0,pAmt:0,lbAmt:0,nhAmt:0,wfAmt:0,totalDeduct:0,net:0 };
+      }
 
       // 選級距（向上取整），若手動且不低於薪資則沿用
       var row = pickGradeBySalary(base);
