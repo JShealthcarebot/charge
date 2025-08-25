@@ -186,7 +186,7 @@
               <input id="month" type="month" />
             </div>
             <div class="field">
-              <label class="flex"><span>依 114(2025) 級距自動帶入（員工負擔：勞保＋健保）</span> <span class="chip">以薪資就近「較低級距」</span></label>
+              <label class="flex"><span>依 114(2025) 級距自動帶入（員工負擔：勞保＋健保）</span> <span class="chip">以薪資就近「較高級距（向上取整）」</span></label>
               <div class="flex">
                 <label style="display:inline-flex;align-items:center;gap:8px"><input id="chkAutoGrade" type="checkbox" checked> 開啟</label>
                 <select id="gradeSelect" style="width:180px"></select>
@@ -406,8 +406,10 @@
 
     // 依薪資選擇級距（就近較低）
     function pickGradeBySalary(base){
-      let best = GRADES[0];
-      for(const r of GRADES){ if(base >= r.g) best = r; else break; }
+      // 向上取整：選擇第一個 >= 薪資 的級距；超出表格上限則使用最高級距
+      for(const r of GRADES){ if(base <= r.g) return r; }
+      return GRADES[GRADES.length-1];
+    }
       return best;
     }
 
@@ -431,7 +433,10 @@
       if(nhAmount) nhAmount.value = row.nh;
       if(nhInsured) nhInsured.value = '';
       if(nhRate) nhRate.value = '';
-      if(gradeInfo) gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元`;
+      if(gradeInfo){
+        const over = base > GRADES[GRADES.length-1].g;
+        gradeInfo.textContent = `級距 ${row.g.toLocaleString()}，員工合計 ${row.t.toLocaleString()} 元` + (over? '（超出表上限，已用最高級距）':'');
+      }
       lastGradeRow = row;
     }
 
@@ -505,7 +510,18 @@
     });
     // 薪資變動時，恢復自動級距模式
     if(salary){ salary.addEventListener('input', ()=>{ manualGrade = false; }); }
-    if(gradeSelect){ gradeSelect.addEventListener('change', ()=>{ manualGrade = true; }); }
+    if(gradeSelect){ gradeSelect.addEventListener('change', ()=>{
+      const base = clamp(toNum(salary.value));
+      const sel = Number(gradeSelect.value||0);
+      // 不允許選擇低於實際薪資的級距 → 自動改為向上最近級距
+      if(sel < base){
+        const row = pickGradeBySalary(base);
+        gradeSelect.value = String(row.g);
+        alert(`投保薪資不得低於實際薪資，已改為 ${row.g.toLocaleString()} 級距`);
+      }
+      manualGrade = true;
+      calc();
+    }); }
 
     // 反推
     if(btnReverse) btnReverse.addEventListener('click',()=>{
